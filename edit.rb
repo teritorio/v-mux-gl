@@ -21,7 +21,7 @@ geojson['features'] = geojson['features'].select{ |feature|
         onto = subclass ? ontology['superclass'][superclass]['class'][class_]['subclass'][subclass] : class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
         raise if !onto
     rescue
-        STDERR.puts "Mssing #{superclass}/#{class_}/#{subclass}"
+        STDERR.puts "Missing #{superclass}/#{class_}/#{subclass}"
         next
     end
     p.merge!({
