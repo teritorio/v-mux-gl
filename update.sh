@@ -18,7 +18,7 @@ tippecanoe --force \
     -o all.mbtiles all.geojson
 
 
-cat all.geojson | jq -c '.features[].properties.metadata | select(.tourism_style_merge==true) | .tourism_style_class' | sort | uniq
+cat allposts.geojson | jq -c '.features[].properties.metadata | select(.tourism_style_merge==true) | .tourism_style_class' | sort | uniq
 
 # TODO limiter par zoom dans le tuiles : ne marche pas
 # -j '{ "*": [  ">=", "$zoom", ["get", "zoom"] ] }'
