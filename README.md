@@ -5,7 +5,7 @@ apt instapp ruby tippecanoe jq
 
 Run
 ```
-./update.sh https://cdt40.carto.guide/api.teritorio/geodata/v1/allposts
+./update.sh https://cdt40.carto.guide
 ```
 
 Output `all.mbtiles` file.

@@ -2,7 +2,7 @@
 
 API=$1
 
-curl $API > allposts.json
+curl $API/api.teritorio/geodata/v1/allposts > allposts.json
 
 
 # Make valid GeoJSON
@@ -17,8 +17,9 @@ tippecanoe --force \
     --attribution='&copy; <a href="https://www.sirtaqui-aquitaine.com/les-donnees-du-sirtaqui/">Sirtaqui</a>' \
     -o all.mbtiles all.geojson
 
-
-cat allposts.geojson | jq -c '.features[].properties.metadata | select(.tourism_style_merge==true) | .tourism_style_class' | sort | uniq
+curl $API/api.teritorio/geodata/v1/menu | \
+    jq -c '[.[].metadata | select(.tourism_style_merge) | .tourism_style_class] | .[]' | \
+    sort | uniq
 
 # TODO limiter par zoom dans le tuiles : ne marche pas
 # -j '{ "*": [  ">=", "$zoom", ["get", "zoom"] ] }'
