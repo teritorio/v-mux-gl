@@ -17,9 +17,8 @@ tippecanoe --force \
     --attribution='&copy; <a href="https://www.sirtaqui-aquitaine.com/les-donnees-du-sirtaqui/">Sirtaqui</a>' \
     -o all.mbtiles all.geojson
 
-curl $API/api.teritorio/geodata/v1/menu | \
-    jq -c '[.[].metadata | select(.tourism_style_merge) | .tourism_style_class] | .[]' | \
-    sort | uniq
+curl $API | \
+    jq -c '[.[].metadata | select(.tourism_style_merge) | .tourism_style_class] | sort | unique' > classes.json
 
 # TODO limiter par zoom dans le tuiles : ne marche pas
 # -j '{ "*": [  ">=", "$zoom", ["get", "zoom"] ] }'

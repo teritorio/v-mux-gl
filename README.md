@@ -8,4 +8,4 @@ Run
 ./update.sh https://cdt40.carto.guide
 ```
 
-Output `all.mbtiles` file.
+Output `all.mbtiles` and `classes.json` files.
