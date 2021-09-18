@@ -1,0 +1,6 @@
+[submodule "vt_merge_proxy"]
+	path = vt_merge_proxy
+	url = git@github.com:teritorio/vt_merge_proxy.git
+[submodule "vt_merge_proxy_fetcher"]
+	path = vt_merge_proxy_fetcher
+	url = git@github.com:teritorio/vt_merge_proxy_fetcher.git

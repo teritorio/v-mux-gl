@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  vt_merge_proxy:
+    build: vt_merge_proxy
+    environment:
+      - CONFIG=/data/config.yaml
+    volumes:
+      - ./data:/data
+
+  nginx:
+    image: nginx
+    environment:
+      - SECRET_CACHE_BYPASS_HEADER=${SECRET_CACHE_BYPASS_HEADER}
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template
+    ports:
+      - ${NGINX_PORT:-8080}:80
+    depends_on:
+      - vt_merge_proxy

@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  vt_merge_proxy_fetcher:
+    build: vt_merge_proxy_fetcher
+    volumes:
+      - ./data:/data
+    environment:
+      - API=${DATA_API_URL}
+    command: bash -c './update.sh "${API}" /data'
+
+  expire:
+    build: expire
+    command: bash -c 'python ./get_tiles.py "http://nginx/data/${DATA_SET}/{z}/{x}/{y}.pbf?key=${TILES_API_KEY}" "$SECRET_CACHE_BYPASS_HEADER" $MIN_X $MIN_Y $MAX_X $MAX_Y'
