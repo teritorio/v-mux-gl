@@ -1,13 +1,11 @@
-version: "3.7"
+version: "3.3"
 
 services:
   vt_merge_proxy_fetcher:
     build: vt_merge_proxy_fetcher
     volumes:
       - ./data:/data
-    environment:
-      - API=${DATA_API_URL}
-    command: bash -c './update.sh "${API}" /data'
+    command: bash -c './update.sh "${DATA_API_URL}" /data'
 
   expire:
     build: expire
