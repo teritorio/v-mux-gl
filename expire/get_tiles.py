@@ -27,10 +27,11 @@ def download_url(path_template, cache_bypass_header, zoom, xtile, ytile):
 def main(argv):
     path_template, cache_bypass_header, bboxD = argv[1], argv[2], list(map(float, argv[3:7]))
     for zoom in range(0, 14 + 1):
+        print(zoom)
         minx, miny = deg2num(bboxD[0], bboxD[3], zoom)
         maxx, maxy = deg2num(bboxD[2], bboxD[1], zoom)
-        for x in range(minx, maxx + 1):
-            for y in range(miny, maxy + 1):
+        for x in range(minx - 2, maxx + 2 + 1):
+            for y in range(miny - 2, maxy + 2 + 1):
                 download_url(path_template, cache_bypass_header, zoom, x, y)
 
 main(argv)
