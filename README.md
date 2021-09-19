@@ -16,6 +16,12 @@ docker-compose -f docker-compose-tools.yaml run --rm vt_merge_proxy_fetcher
 docker-compose up -d
 ```
 
+Fill the tiles cache in nginx:
+```
+docker-compose -f docker-compose-tools.yaml run --rm expire
+```
+
+
 # Data update
 
 Get and switch to new data:
@@ -24,7 +30,7 @@ docker-compose -f docker-compose-tools.yaml run --rm vt_merge_proxy_fetcher
 docker-compose restart
 ```
 
-Fill or update tiles in nginx cache:
+Update the tiles cache in nginx:
 ```
 docker-compose -f docker-compose-tools.yaml run --rm expire
 ```
