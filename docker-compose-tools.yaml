@@ -9,4 +9,4 @@ services:
 
   expire:
     build: expire
-    command: bash -c 'python ./get_tiles.py "http://nginx/data/${DATA_SET}/{z}/{x}/{y}.pbf?key=${TILES_API_KEY}" "$SECRET_CACHE_BYPASS_HEADER" $MIN_X $MIN_Y $MAX_X $MAX_Y'
+    command: bash -c 'python ./get_tiles.py "http://nginx/data/${DATA_SET}/{z}/{x}/{y}.pbf?key=${TILES_API_KEY}" bypass $MIN_X $MIN_Y $MAX_X $MAX_Y'

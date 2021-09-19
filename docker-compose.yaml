@@ -10,11 +10,13 @@ services:
 
   nginx:
     image: nginx
-    environment:
-      - SECRET_CACHE_BYPASS_HEADER=${SECRET_CACHE_BYPASS_HEADER}
     volumes:
+      - cache:/cache
       - ./nginx.conf:/etc/nginx/templates/default.conf.template
     ports:
       - ${NGINX_PORT:-8080}:80
     depends_on:
       - vt_merge_proxy
+
+volumes:
+    cache:
