@@ -17,6 +17,7 @@ services:
       - ${NGINX_PORT:-8080}:80
     depends_on:
       - vt_merge_proxy
+#    restart: always
 
 volumes:
     cache:
