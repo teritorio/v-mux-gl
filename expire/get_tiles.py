@@ -30,8 +30,8 @@ def main(argv):
         print(zoom)
         minx, miny = deg2num(bboxD[0], bboxD[3], zoom)
         maxx, maxy = deg2num(bboxD[2], bboxD[1], zoom)
-        for x in range(minx - 2, maxx + 2 + 1):
-            for y in range(miny - 2, maxy + 2 + 1):
+        for x in range(max(minx - 2, 0), min(maxx + 2 + 1, 2 ** zoom)):
+            for y in range(max(miny - 2, 0), min(maxy + 2 + 1, 2 ** zoom)):
                 download_url(path_template, cache_bypass_header, zoom, x, y)
 
 main(argv)
