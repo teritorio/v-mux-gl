@@ -34,3 +34,9 @@ Update the tiles cache in nginx:
 ```
 docker-compose -f docker-compose-tools.yaml run --rm expire
 ```
+
+
+# Serve
+
+Under reverse proxy HTTP header `Host` should contains the original value.
+Header `Forwarded` should also properly set.
