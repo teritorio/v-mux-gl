@@ -5,7 +5,7 @@ apt install ruby tippecanoe jq
 
 Run
 ```
-./update.sh https://cdt40.carto.guide
+./update.sh https://cdt40.carto.guide .
 ```
 
 Using Docker
