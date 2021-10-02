@@ -2,7 +2,8 @@ FROM alpine:3.13
 
 ARG TIPPECANOE_RELEASE="1.36.0"
 
-RUN apk add --no-cache bash curl jq ruby ruby-json
+RUN apk add --no-cache bash curl ruby ruby-json && \
+    gem install yaml
 
 RUN apk add --no-cache git g++ make libgcc libstdc++ sqlite-libs sqlite-dev zlib-dev && \
     git clone https://github.com/mapbox/tippecanoe.git tippecanoe && \
@@ -13,5 +14,4 @@ RUN apk add --no-cache git g++ make libgcc libstdc++ sqlite-libs sqlite-dev zlib
     cd / && \
     rm -rf /tippecanoe
 
-ADD edit.rb .
-ADD update.sh .
+ADD update.rb .
