@@ -1,8 +1,6 @@
-FROM python:3.9-alpine
+FROM alpine:3.13
 
-RUN apk add --no-cache bash
+RUN apk add --no-cache bash ruby ruby-json && \
+    gem install yaml
 
-ADD requirements.txt .
-RUN pip install -r requirements.txt
-
-ADD get_tiles.py .
+ADD get_tiles.rb .
