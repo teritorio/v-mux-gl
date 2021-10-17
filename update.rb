@@ -4,9 +4,7 @@ require 'yaml'
 require 'json'
 require 'open-uri'
 require 'set'
-
-
-@ontology = JSON.parse(URI.parse('https://vecto.teritorio.xyz/data/teritorio-ontology-latest.json').read)
+require 'deep_merge'
 
 
 def menu(url, json)
@@ -22,7 +20,7 @@ def menu(url, json)
 end
 
 
-def posts(url, geojson)
+def posts(url, geojson, ontology)
     allposts = JSON.parse(URI.parse(url).read)
     allposts_geojson = allposts.collect{ |key, post| post[0]['FeaturesCollection']['features'] }.flatten(1)
 
@@ -35,7 +33,7 @@ def posts(url, geojson)
         pid = p['metadata']['PID']
         superclass, class_, subclass = p['metadata']['tourism_style_class']
         begin
-            onto = subclass ? @ontology['superclass'][superclass]['class'][class_]['subclass'][subclass] : class_ ? @ontology['superclass'][superclass]['class'][class_] : @ontology['superclass'][superclass]
+            onto = subclass ? ontology['superclass'][superclass]['class'][class_]['subclass'][subclass] : class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
             raise if !onto
         rescue
             missing_classes << "#{superclass}/#{class_}/#{subclass}"
@@ -94,9 +92,13 @@ config['styles'].each{ |style_id, style|
     classes = style['merge_layer']['classes']
     menu(data_api_url + '/api.teritorio/geodata/v1/menu', classes)
 
+    ontology = JSON.parse(URI.parse(style['sources']['full']['ontology']['url']).read)
+    ontology_overwrite = style['sources']['full']['ontology']['data'] || {}
+    ontology.deep_merge!(ontology_overwrite)
+
     mbtiles = style['sources']['partial']['mbtiles']
     layer = style['merge_layer']['layer']
     attribution = fetcher['attribution']
-    posts(data_api_url + '/api.teritorio/geodata/v1/allposts', mbtiles + '.geojson')
+    posts(data_api_url + '/api.teritorio/geodata/v1/allposts', mbtiles + '.geojson', ontology)
     tippecanoe(mbtiles + '.geojson', mbtiles, layer, attribution)
 }
