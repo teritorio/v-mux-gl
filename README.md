@@ -1,6 +1,6 @@
 Install
 ```
-apt install ruby tippecanoe jq
+apt install ruby tippecanoe
 ```
 
 Run

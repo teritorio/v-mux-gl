@@ -20,12 +20,12 @@ def menu(url, json)
 end
 
 
-def posts(url, geojson, ontology)
-    allposts = JSON.parse(URI.parse(url).read)
-    allposts_geojson = allposts.collect{ |key, post| post[0]['FeaturesCollection']['features'] }.flatten(1)
+def pois(url, geojson, ontology)
+    pois = JSON.parse(URI.parse(url).read)
+    pois_geojson = pois['features']
 
     missing_classes = Set.new()
-    allposts_geojson = allposts_geojson.select{ |feature|
+    pois_geojson = pois_geojson.select{ |feature|
         metadata = feature['properties']['metadata']
         metadata && metadata['tourism_style_class'] && metadata['tourism_style_class'] != '' #&& metadata['tourism_style_merge']
     }.collect{ |feature|
@@ -61,11 +61,11 @@ def posts(url, geojson, ontology)
         STDERR.puts "Missing #{mc}"
     }
 
-    allposts_geojson = {
+    pois_geojson = {
         type: 'FeatureCollection',
-        features: allposts_geojson,
+        features: pois_geojson,
     }
-    File.write(geojson, JSON.pretty_generate(allposts_geojson))
+    File.write(geojson, JSON.pretty_generate(pois_geojson))
 end
 
 
@@ -90,7 +90,7 @@ config['styles'].each{ |style_id, style|
     data_api_url = fetcher['data_api_url']
 
     classes = style['merge_layer']['classes']
-    menu(data_api_url + '/api.teritorio/geodata/v1/menu', classes)
+    menu(data_api_url + '/api.teritorio/geodata/v0.1/menu', classes)
 
     ontology = JSON.parse(URI.parse(style['sources']['full']['ontology']['url']).read)
     ontology_overwrite = style['sources']['full']['ontology']['data'] || {}
@@ -99,6 +99,6 @@ config['styles'].each{ |style_id, style|
     mbtiles = style['sources']['partial']['mbtiles']
     layer = style['merge_layer']['layer']
     attribution = fetcher['attribution']
-    posts(data_api_url + '/api.teritorio/geodata/v1/allposts', mbtiles + '.geojson', ontology)
+    pois(data_api_url + '/api.teritorio/geodata/v0.1/pois', mbtiles + '.geojson', ontology)
     tippecanoe(mbtiles + '.geojson', mbtiles, layer, attribution)
 }
