@@ -7,6 +7,12 @@ require 'set'
 require 'deep_merge'
 
 
+def setting(url, polygon)
+    setting = JSON.parse(URI.parse(url).read)
+    File.write(polygon, JSON.pretty_generate(setting['polygon']))
+end
+
+
 def menu(url, json)
     menu = JSON.parse(URI.parse(url).read)
     classes = menu.select{ |m|
@@ -90,6 +96,9 @@ config = YAML.load(File.read(ARGV[0]))
 config['styles'].each{ |style_id, style|
     fetcher = style['sources']['partial']['fetcher']
     data_api_url = fetcher['data_api_url']
+
+    polygon = style['merge_layer']['polygon']
+    setting(data_api_url, polygon)
 
     classes = style['merge_layer']['classes']
     menu(data_api_url + '/menu', classes)
