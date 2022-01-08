@@ -9,8 +9,10 @@ require 'deep_merge'
 
 def menu(url, json)
     menu = JSON.parse(URI.parse(url).read)
-    classes = menu.collect{|key, m|
-        m['metadata']
+    classes = menu.select{ |m|
+        m['category']
+    }.collect{|m|
+        m['category']
     }.select{ |m|
         m['tourism_style_merge']
     }.collect{ |m|
@@ -26,12 +28,12 @@ def pois(url, geojson, ontology)
 
     missing_classes = Set.new()
     pois_geojson = pois_geojson.select{ |feature|
-        metadata = feature['properties']['metadata']
-        metadata && metadata['tourism_style_class'] && metadata['tourism_style_class'] != '' #&& metadata['tourism_style_merge']
+        display = feature['properties']['display']
+        display && display['tourism_style_class'] && display['tourism_style_class'] != ''
     }.collect{ |feature|
         p = feature['properties']
-        pid = p['metadata']['PID']
-        superclass, class_, subclass = p['metadata']['tourism_style_class']
+        id = p['metadata']['id']
+        superclass, class_, subclass = p['display']['tourism_style_class']
         begin
             onto = subclass ? ontology['superclass'][superclass]['class'][class_]['subclass'][subclass] : class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
             raise if !onto
@@ -40,7 +42,7 @@ def pois(url, geojson, ontology)
             next
         end
         p.merge!({
-            PID: pid,
+            id: id,
             superclass: superclass,
             'class': class_,
             subclass: subclass,
@@ -49,11 +51,11 @@ def pois(url, geojson, ontology)
             style: onto['style'],
         })
         p['name:latin'] = p['name'] if p.key?('name')
-        p.delete('post_title')
         p.delete('metadata')
+        p.delete('editorial')
+        p.delete('display')
 
-        feature.delete('wp_tags')
-        feature.delete('covid19_fields')
+        feature['properties'] = Hash[p.collect{ |k, v| [k, v && v.kind_of?(Array) ? v.join(';') : v] }]
         feature
     }
 
@@ -73,7 +75,7 @@ def tippecanoe(geojson, mbtiles, layer, attribution)
     system("""
         tippecanoe --force \
             --layer=#{layer} \
-            --use-attribute-for-id=PID \
+            --use-attribute-for-id=id \
             --convert-stringified-ids-to-numbers \
             --attribution='#{attribution}' \
             -o #{mbtiles} #{geojson}
@@ -90,7 +92,7 @@ config['styles'].each{ |style_id, style|
     data_api_url = fetcher['data_api_url']
 
     classes = style['merge_layer']['classes']
-    menu(data_api_url + '/api.teritorio/geodata/v0.1/menu', classes)
+    menu(data_api_url + '/menu', classes)
 
     ontology = JSON.parse(URI.parse(style['sources']['full']['ontology']['url']).read)
     ontology_overwrite = style['sources']['full']['ontology']['data'] || {}
@@ -99,6 +101,6 @@ config['styles'].each{ |style_id, style|
     mbtiles = style['sources']['partial']['mbtiles']
     layer = style['merge_layer']['layer']
     attribution = fetcher['attribution']
-    pois(data_api_url + '/api.teritorio/geodata/v0.1/pois', mbtiles + '.geojson', ontology)
+    pois(data_api_url + '/pois', mbtiles + '.geojson', ontology)
     tippecanoe(mbtiles + '.geojson', mbtiles, layer, attribution)
 }
