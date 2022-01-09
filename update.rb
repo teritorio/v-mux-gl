@@ -2,19 +2,22 @@
 
 require 'yaml'
 require 'json'
-require 'open-uri'
 require 'set'
 require 'deep_merge'
+require 'webcache'
+
+
+@download_cache = WebCache.new(life: '6h', dir: '/data/cache')
 
 
 def setting(url, polygon)
-    setting = JSON.parse(URI.parse(url).read)
+    setting = JSON.parse(@download_cache.get(url).content)
     File.write(polygon, JSON.pretty_generate(setting['polygon']))
 end
 
 
 def menu(url, json)
-    menu = JSON.parse(URI.parse(url).read)
+    menu = JSON.parse(@download_cache.get(url).content)
     classes = menu.select{ |m|
         m['category']
     }.collect{|m|
@@ -100,11 +103,11 @@ config['styles'].each{ |style_id, style|
     classes = style['merge_layer']['classes']
     menu(data_api_url + '/menu', classes)
 
-    ontology = JSON.parse(URI.parse(style['sources']['full']['ontology']['url']).read)
+    ontology = JSON.parse(@download_cache.get(style['sources']['full']['ontology']['url']).content)
     ontology_overwrite = style['sources']['full']['ontology']['data'] || {}
     ontology.deep_merge!(ontology_overwrite)
 
-    pois = JSON.parse(URI.parse(data_api_url + '/pois').read)
+    pois = JSON.parse(@download_cache.get(data_api_url + '/pois').content)
     pois_features = pois['features']
 
     mbtiles = style['sources']['partial']['mbtiles']
