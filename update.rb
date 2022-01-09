@@ -5,6 +5,7 @@ require 'json'
 require 'set'
 require 'deep_merge'
 require 'webcache'
+require 'gpx'
 
 
 @download_cache = WebCache.new(life: '6h', dir: '/data/cache')
@@ -77,14 +78,111 @@ def pois(pois_geojson, geojson, ontology)
 end
 
 
-def tippecanoe(pois_json, mbtiles, layer, attribution)
+def merge_compact_multilinestring(tracks)
+    # Count tracks at connection points
+    ends = Hash.new { |h, k| h[k] = [] }
+    tracks.each{ |track|
+        ends[track[0]] << track
+        ends[track[-1]] << track
+    }
+
+    # Exclude non mergable tracks
+    merge_tracks = []
+    ends.each{ |p, tracks|
+        if tracks.size != 2 then
+            merge_tracks += tracks
+            ends.delete(p)
+        end
+    }
+    merge_tracks = merge_tracks.uniq - ends.collect{ |p, tracks| tracks }.flatten(1)
+
+    while(ends.size > 0) do
+        p = ends.keys[0]
+        tracks = ends[p]
+        ends.delete(p)
+
+        # Merge consecutive linestring
+        tracks_0 = tracks[0]
+        tracks_1 = tracks[1]
+        if tracks[0][-1] != p then
+            tracks[0] = tracks[0].reverse
+        end
+        if tracks[1][0] != p then
+            tracks[1] = tracks[1].reverse
+        end
+
+        merge_track = tracks[0] + tracks[1][1..-1]
+
+        # Update ends
+        if ends.include?(merge_track[0]) || ends.include?(merge_track[-1]) then
+            if ends.include?(merge_track[0]) then
+                ends[merge_track[0]] = ends[merge_track[0]] - [tracks_0] + [merge_track]
+            end
+            if ends.include?(merge_track[-1]) then
+                ends[merge_track[-1]] = ends[merge_track[-1]] - [tracks_1] + [merge_track]
+            end
+        else
+            merge_tracks << merge_track
+        end
+    end
+
+    merge_tracks
+end
+
+
+def routes(routes_geojson, geojson)
+    cache = WebCache.new(life: '30d', dir: '/data/routes-cache')
+
+    routes_geojson = routes_geojson.select{ |feature|
+        !feature['properties']['route:gpx_trace'].nil?
+    }.each{ |feature|
+        feature['properties']['route:trace'] = cache.get(feature['properties']['route:gpx_trace']).content
+    }.select{ |feature|
+        !feature['properties']['route:trace'].nil?
+    }.collect{ |feature|
+        p = feature['properties']
+        id = p['metadata']['id']
+
+        p.merge!({
+            id: id,
+            color: p['display'] && p['display']['color'],
+        })
+        p['name:latin'] = p['name'] if p.key?('name')
+
+        gpx = GPX::GPXFile.new(gpx_data: feature['properties']['route:trace'])
+        feature['geometry'] = {
+            type: 'MultiLineString',
+            coordinates: merge_compact_multilinestring(gpx.tracks.collect{ |track|
+                track.points.collect{ |point| [point.lon, point.lat] }
+            })
+        }
+        p.delete('route:trace')
+
+        p.delete('metadata')
+        p.delete('editorial')
+        p.delete('display')
+
+        feature['properties'] = Hash[p.collect{ |k, v| [k, v && v.kind_of?(Array) ? v.join(';') : v] }]
+        feature
+    }
+
+    routes_geojson = {
+        type: 'FeatureCollection',
+        features: routes_geojson,
+    }
+    File.write(geojson, JSON.pretty_generate(routes_geojson))
+end
+
+
+def tippecanoe(pois_json, pois_layer, routes_json, routes_layer, mbtiles, attribution)
     system("""
         tippecanoe --force \
-            --layer=#{layer} \
+            --named-layer=#{pois_layer}:#{pois_json} \
+            --named-layer=#{routes_layer}:#{routes_json} \
             --use-attribute-for-id=id \
             --convert-stringified-ids-to-numbers \
             --attribution='#{attribution}' \
-            -o #{mbtiles} #{pois_json}
+            -o #{mbtiles}
     """)
 
     # TODO limiter par zoom dans le tuiles : ne marche pas
@@ -114,8 +212,10 @@ config['styles'].each{ |style_id, style|
 
     pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
     pois(pois_features, pois_json, ontology)
+    routes_json = mbtiles.gsub('.mbtiles', '-routes.geojson')
+    routes(pois_features, routes_json)
 
     layer = style['merge_layer']['layer']
     attribution = fetcher['attribution']
-    tippecanoe(pois_json, mbtiles, layer, attribution)
+    tippecanoe(pois_json, layer, routes_json, 'route_tourism', mbtiles, attribution)
 }
