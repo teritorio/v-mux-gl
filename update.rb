@@ -28,10 +28,7 @@ def menu(url, json)
 end
 
 
-def pois(url, geojson, ontology)
-    pois = JSON.parse(URI.parse(url).read)
-    pois_geojson = pois['features']
-
+def pois(pois_geojson, geojson, ontology)
     missing_classes = Set.new()
     pois_geojson = pois_geojson.select{ |feature|
         display = feature['properties']['display']
@@ -77,14 +74,14 @@ def pois(url, geojson, ontology)
 end
 
 
-def tippecanoe(geojson, mbtiles, layer, attribution)
+def tippecanoe(pois_json, mbtiles, layer, attribution)
     system("""
         tippecanoe --force \
             --layer=#{layer} \
             --use-attribute-for-id=id \
             --convert-stringified-ids-to-numbers \
             --attribution='#{attribution}' \
-            -o #{mbtiles} #{geojson}
+            -o #{mbtiles} #{pois_json}
     """)
 
     # TODO limiter par zoom dans le tuiles : ne marche pas
@@ -107,9 +104,15 @@ config['styles'].each{ |style_id, style|
     ontology_overwrite = style['sources']['full']['ontology']['data'] || {}
     ontology.deep_merge!(ontology_overwrite)
 
+    pois = JSON.parse(URI.parse(data_api_url + '/pois').read)
+    pois_features = pois['features']
+
     mbtiles = style['sources']['partial']['mbtiles']
+
+    pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
+    pois(pois_features, pois_json, ontology)
+
     layer = style['merge_layer']['layer']
     attribution = fetcher['attribution']
-    pois(data_api_url + '/pois', mbtiles + '.geojson', ontology)
-    tippecanoe(mbtiles + '.geojson', mbtiles, layer, attribution)
+    tippecanoe(pois_json, mbtiles, layer, attribution)
 }
