@@ -195,7 +195,7 @@ config['styles'].each{ |style_id, style|
     fetcher = style['sources']['partial']['fetcher']
     data_api_url = fetcher['data_api_url']
 
-    polygon = style['merge_layer']['polygon']
+    polygon = style['polygon']
     setting(data_api_url, polygon)
 
     classes = style['merge_layer']['classes']
