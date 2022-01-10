@@ -198,7 +198,7 @@ config['styles'].each{ |style_id, style|
     polygon = style['polygon']
     setting(data_api_url, polygon)
 
-    classes = style['merge_layer']['classes']
+    classes = style['merge_layers']['poi_tourism']['classes']
     menu(data_api_url + '/menu', classes)
 
     ontology = JSON.parse(@download_cache.get(style['sources']['full']['ontology']['url']).content)
@@ -215,7 +215,6 @@ config['styles'].each{ |style_id, style|
     routes_json = mbtiles.gsub('.mbtiles', '-routes.geojson')
     routes(pois_features, routes_json)
 
-    layer = style['merge_layer']['layer']
     attribution = fetcher['attribution']
-    tippecanoe(pois_json, layer, routes_json, 'route_tourism', mbtiles, attribution)
+    tippecanoe(pois_json, 'poi_tourism', routes_json, 'route_tourism', mbtiles, attribution)
 }
