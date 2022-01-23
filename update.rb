@@ -1,5 +1,9 @@
 #!/usr/bin/ruby
 
+require 'rubygems'
+require 'bundler'
+Bundler.setup
+
 require 'yaml'
 require 'json'
 require 'set'
