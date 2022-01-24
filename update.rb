@@ -9,7 +9,7 @@ require 'json'
 require 'set'
 require 'deep_merge'
 require 'webcache'
-require 'gpx'
+require 'nokogiri'
 
 
 @download_cache = WebCache.new(life: '6h', dir: '/data/cache')
@@ -134,6 +134,25 @@ def merge_compact_multilinestring(tracks)
 end
 
 
+def gpx2geojson(gpx)
+    doc = Nokogiri::XML(gpx)
+    doc.remove_namespaces!
+    {
+        type: 'MultiLineString',
+        coordinates: doc.xpath('/gpx/rte').collect{ |rte|
+            rte.xpath('rtept').collect{ |pt|
+                [pt.attribute('lon').to_s.to_f, pt.attribute('lat').to_s.to_f]
+            }
+        } + doc.xpath('/gpx/trk').collect{ |trk|
+            trk.xpath('trkseg').collect{ |seg|
+                seg.xpath('trkpt').collect{ |pt|
+                    [pt.attribute('lon').to_s.to_f, pt.attribute('lat').to_s.to_f]
+                }
+            }
+        }.flatten(1)
+    }
+end
+
 def routes(routes_geojson, geojson)
     cache = WebCache.new(life: '30d', dir: '/data/routes-cache')
 
@@ -153,13 +172,7 @@ def routes(routes_geojson, geojson)
         })
         p['name:latin'] = p['name'] if p.key?('name')
 
-        gpx = GPX::GPXFile.new(gpx_data: feature['properties']['route:trace'])
-        feature['geometry'] = {
-            type: 'MultiLineString',
-            coordinates: merge_compact_multilinestring(gpx.tracks.collect{ |track|
-                track.points.collect{ |point| [point.lon, point.lat] }
-            })
-        }
+        feature['geometry'] = gpx2geojson(feature['properties']['route:trace'])
         p.delete('route:trace')
 
         p.delete('metadata')
