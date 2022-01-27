@@ -208,24 +208,24 @@ end
 
 
 config = YAML.load(File.read(ARGV[0]))
-config['styles'].each{ |style_id, style|
-    fetcher = style['sources']['partial']['fetcher']
+config['sources'].each{ |source_id, source|
+    fetcher = source['sources']['partial']['fetcher']
     data_api_url = fetcher['data_api_url']
 
-    polygon = style['polygon']
+    polygon = source['polygon']
     setting(data_api_url, polygon)
 
-    classes = style['merge_layers']['poi_tourism']['classes']
+    classes = source['merge_layers']['poi_tourism']['classes']
     menu(data_api_url + '/menu', classes)
 
-    ontology = JSON.parse(@download_cache.get(style['sources']['full']['ontology']['url']).content)
-    ontology_overwrite = style['sources']['full']['ontology']['data'] || {}
+    ontology = JSON.parse(@download_cache.get(source['sources']['full']['ontology']['url']).content)
+    ontology_overwrite = source['sources']['full']['ontology']['data'] || {}
     ontology.deep_merge!(ontology_overwrite)
 
     pois = JSON.parse(@download_cache.get(data_api_url + '/pois').content)
     pois_features = pois['features']
 
-    mbtiles = style['sources']['partial']['mbtiles']
+    mbtiles = source['sources']['partial']['mbtiles']
 
     pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
     pois(pois_features, pois_json, ontology)
