@@ -44,12 +44,12 @@ end
 config, server_url, cache_bypass_header = *ARGV
 server_uri = URI(server_url)
 config = YAML.load(File.read(config))
-config['styles'].each{ |style_id, style|
-    puts(style_id)
-    id = style['id']
-    bbox = style['bbox']
-    key = style['sources']['full']['key']
-    host = style['hosts'][0]
+config['sources'].each{ |source_id, source|
+    puts(source_id)
+    id = source['id']
+    bbox = source['bbox']
+    key = source['sources']['full']['key']
+    host = source['hosts'][0]
     url_template = "http://#{host}/data/#{id}/__z__/__x__/__y__.pbf?key=#{key}"
     request_uri = URI(url_template)
 
