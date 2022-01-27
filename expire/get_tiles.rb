@@ -44,9 +44,8 @@ end
 config, server_url, cache_bypass_header = *ARGV
 server_uri = URI(server_url)
 config = YAML.load(File.read(config))
-config['sources'].each{ |source_id, source|
-    puts(source_id)
-    id = source['id']
+config['sources'].each{ |id, source|
+    puts(id)
     bbox = source['bbox']
     key = source['sources']['full']['key']
     host = source['hosts'][0]
