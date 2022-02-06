@@ -164,10 +164,9 @@ def routes(routes_geojson, geojson)
         !feature['properties']['route:trace'].nil?
     }.collect{ |feature|
         p = feature['properties']
-        id = p['metadata']['id']
-
         p.merge!({
-            id: id,
+            id: p['metadata']['id'],
+            category_ids: p['metadata']['category_ids'] && ';' + p['metadata']['category_ids'].join(';') + ';',
             color: p['display'] && p['display']['color'],
         })
         p['name:latin'] = p['name'] if p.key?('name')
