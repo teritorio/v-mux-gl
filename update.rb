@@ -190,11 +190,11 @@ def routes(routes_geojson, geojson)
 end
 
 
-def tippecanoe(pois_json, pois_layer, routes_json, routes_layer, mbtiles, attribution)
+def tippecanoe(pois_json, pois_layer, features_json, features_layer, mbtiles, attribution)
     system("""
         tippecanoe --force \
             --named-layer=#{pois_layer}:#{pois_json} \
-            --named-layer=#{routes_layer}:#{routes_json} \
+            --named-layer=#{features_layer}:#{features_json} \
             --use-attribute-for-id=id \
             --convert-stringified-ids-to-numbers \
             --attribution='#{attribution}' \
@@ -228,9 +228,9 @@ config['sources'].each{ |source_id, source|
 
     pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
     pois(pois_features, pois_json, ontology)
-    routes_json = mbtiles.gsub('.mbtiles', '-routes.geojson')
-    routes(pois_features, routes_json)
+    features_json = mbtiles.gsub('.mbtiles', '-features.geojson')
+    routes(pois_features, features_json)
 
     attribution = fetcher['attribution']
-    tippecanoe(pois_json, 'poi_tourism', routes_json, 'route_tourism', mbtiles, attribution)
+    tippecanoe(pois_json, 'poi_tourism', features_json, 'features_tourism', mbtiles, attribution)
 }
