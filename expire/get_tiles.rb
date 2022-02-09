@@ -4,7 +4,15 @@ require 'yaml'
 require 'json'
 require 'open-uri'
 require 'net/http'
+require 'webcache'
 
+
+@download_cache = WebCache.new(life: '6h', dir: '/data/cache')
+
+
+def setting(url)
+    setting = JSON.parse(@download_cache.get(url).content)
+end
 
 def deg2num(lon_deg, lat_deg, zoom)
     lat_rad = lat_deg / 180 * Math::PI
@@ -30,8 +38,8 @@ def get_tiles(server_uri, request_uri, cache_bypass_header, bbox)
     path_template = request_uri.path
     0.upto(14).each{ |zoom|
         puts(zoom)
-        minx, miny = deg2num(bbox[0], bbox[3], zoom)
-        maxx, maxy = deg2num(bbox[2], bbox[1], zoom)
+        minx, miny = deg2num(bbox[0][0], bbox[1][1], zoom)
+        maxx, maxy = deg2num(bbox[1][0], bbox[0][1], zoom)
         [minx - 2, 0].max.upto([maxx + 2, 2 ** zoom - 1].min).each{ |x|
             [miny - 2, 0].max.upto([maxy + 2, 2 ** zoom - 1].min).each{ |y|
                 request_uri.path = path_template.gsub('__x__', x.to_s).sub('__y__', y.to_s).gsub('__z__', zoom.to_s)
@@ -43,10 +51,15 @@ end
 
 config, server_url, cache_bypass_header = *ARGV
 server_uri = URI(server_url)
-config = YAML.load(File.read(config))
+config = YAML.safe_load(File.read(config), aliases: true)
 config['sources'].each{ |id, source|
     puts(id)
-    bbox = source['bbox']
+
+    data_api_url = source['sources']['partial']['fetcher']['data_api_url']
+    config = setting(data_api_url)
+    bbox = config['bbox_line']['coordinates']
+    puts bbox.inspect
+
     key = source['sources']['full']['key']
     host = source['hosts'][0]
     url_template = "http://#{host}/data/#{id}/__z__/__x__/__y__.pbf?key=#{key}"
