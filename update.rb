@@ -36,6 +36,11 @@ def menu(url, json)
 end
 
 
+def category_ids(ids)
+    ids && ';' + ids.join(';') + ';'
+end
+
+
 def pois(pois_geojson, ontology)
     missing_classes = Set.new()
     pois_geojson = pois_geojson.select{ |feature|
@@ -162,7 +167,7 @@ def routes(routes_geojson)
         p = feature['properties']
         p.merge!({
             id: p['metadata']['id'],
-            category_ids: p['metadata']['category_ids'] && ';' + p['metadata']['category_ids'].join(';') + ';',
+            category_ids: category_ids(p['metadata']['category_ids']),
             color: p['display'] && p['display']['color'],
         })
         p['name:latin'] = p['name'] if p.key?('name')
