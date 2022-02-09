@@ -50,36 +50,48 @@ def pois(pois_geojson, ontology)
         p = feature['properties']
         id = p['metadata']['id']
         superclass, class_, subclass = p['display']['tourism_style_class']
-        begin
-            onto = subclass ? ontology['superclass'][superclass]['class'][class_]['subclass'][subclass] : class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
-            raise if !onto
-        rescue
-            missing_classes << "#{superclass}/#{class_}/#{subclass}"
-            next
+        color = p['display'] && p['display']['color']
+        if !color then
+            begin
+                onto = subclass ? ontology['superclass'][superclass]['class'][class_]['subclass'][subclass] : class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
+                raise if !onto
+            rescue
+                missing_classes << "#{superclass}/#{class_}/#{subclass}"
+                next
+            end
         end
-        p.merge!({
+        p = p.merge({
             id: id,
+            category_ids: category_ids(p['metadata']['category_ids']),
             superclass: superclass,
             'class': class_,
             subclass: subclass,
-            priority: onto['priority'],
-            zoom: onto['zoom'],
-            style: onto['style'],
+            priority: onto && onto['priority'],
+            zoom: onto && onto['zoom'],
+            style: onto && onto['style'],
+            color: color,
         })
         p['name:latin'] = p['name'] if p.key?('name')
         p.delete('metadata')
         p.delete('editorial')
         p.delete('display')
 
-        feature['properties'] = Hash[p.collect{ |k, v| [k, v && v.kind_of?(Array) ? v.join(';') : v] }]
-        feature
+        {
+            type: 'Feature',
+            properties: Hash[p.collect{ |k, v| [k, v && v.kind_of?(Array) ? v.join(';') : v] }],
+            geometry: feature['geometry'],
+        }
     }
 
     missing_classes.each{ |mc|
         STDERR.puts "Missing #{mc}"
     }
 
-    pois_geojson
+    groups = pois_geojson.group_by{ |feature|
+        feature[:geometry]['type'] == 'Point'
+    }
+
+    [groups[true] || [], groups[false] || []]
 end
 
 
@@ -201,7 +213,7 @@ def tippecanoe(pois_json, pois_layer, features_json, features_layer, mbtiles, at
 end
 
 
-config = YAML.load(File.read(ARGV[0]))
+config = YAML.load(File.read(ARGV[0])) # After update add "aliases: true"
 config['sources'].each{ |source_id, source|
     fetcher = source['sources']['partial']['fetcher']
     data_api_url = fetcher['data_api_url']
@@ -221,15 +233,16 @@ config['sources'].each{ |source_id, source|
 
     mbtiles = source['sources']['partial']['mbtiles']
 
+    pois_data, features_data = pois(pois_features, ontology)
+    features_data += routes(pois_features)
+
     pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
-    pois_data = pois(pois_features, ontology)
     File.write(pois_json, JSON.pretty_generate({
         type: 'FeatureCollection',
         features: pois_data
     }))
 
     features_json = mbtiles.gsub('.mbtiles', '-features.geojson')
-    features_data = routes(pois_features, features_json)
     File.write(features_json, JSON.pretty_generate({
         type: 'FeatureCollection',
         features: features_data
