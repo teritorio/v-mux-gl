@@ -36,7 +36,7 @@ def menu(url, json)
 end
 
 
-def pois(pois_geojson, geojson, ontology)
+def pois(pois_geojson, ontology)
     missing_classes = Set.new()
     pois_geojson = pois_geojson.select{ |feature|
         display = feature['properties']['display']
@@ -74,11 +74,7 @@ def pois(pois_geojson, geojson, ontology)
         STDERR.puts "Missing #{mc}"
     }
 
-    pois_geojson = {
-        type: 'FeatureCollection',
-        features: pois_geojson,
-    }
-    File.write(geojson, JSON.pretty_generate(pois_geojson))
+    pois_geojson
 end
 
 
@@ -153,10 +149,10 @@ def gpx2geojson(gpx)
     }
 end
 
-def routes(routes_geojson, geojson)
+def routes(routes_geojson)
     cache = WebCache.new(life: '30d', dir: '/data/routes-cache')
 
-    routes_geojson = routes_geojson.select{ |feature|
+    routes_geojson.select{ |feature|
         !feature['properties']['route:gpx_trace'].nil?
     }.each{ |feature|
         feature['properties']['route:trace'] = cache.get(feature['properties']['route:gpx_trace']).content
@@ -181,12 +177,6 @@ def routes(routes_geojson, geojson)
         feature['properties'] = Hash[p.collect{ |k, v| [k, v && v.kind_of?(Array) ? v.join(';') : v] }]
         feature
     }
-
-    routes_geojson = {
-        type: 'FeatureCollection',
-        features: routes_geojson,
-    }
-    File.write(geojson, JSON.pretty_generate(routes_geojson))
 end
 
 
@@ -227,9 +217,18 @@ config['sources'].each{ |source_id, source|
     mbtiles = source['sources']['partial']['mbtiles']
 
     pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
-    pois(pois_features, pois_json, ontology)
+    pois_data = pois(pois_features, ontology)
+    File.write(pois_json, JSON.pretty_generate({
+        type: 'FeatureCollection',
+        features: pois_data
+    }))
+
     features_json = mbtiles.gsub('.mbtiles', '-features.geojson')
-    routes(pois_features, features_json)
+    features_data = routes(pois_features, features_json)
+    File.write(features_json, JSON.pretty_generate({
+        type: 'FeatureCollection',
+        features: features_data
+    }))
 
     attribution = fetcher['attribution']
     tippecanoe(pois_json, 'poi_tourism', features_json, 'features_tourism', mbtiles, attribution)
