@@ -213,8 +213,7 @@ def tippecanoe(pois_json, pois_layer, features_json, features_layer, mbtiles, at
 end
 
 
-config = YAML.load(File.read(ARGV[0])) # After update add "aliases: true"
-config['sources'].each{ |source_id, source|
+def build(source_id, source)
     fetcher = source['sources']['partial']['fetcher']
     data_api_url = fetcher['data_api_url']
 
@@ -250,4 +249,16 @@ config['sources'].each{ |source_id, source|
 
     attribution = fetcher['attribution']
     tippecanoe(pois_json, 'poi_tourism', features_json, 'features_tourism', mbtiles, attribution)
+end
+
+
+config = YAML.load(File.read(ARGV[0])) # After update add "aliases: true"
+config['sources'].each{ |source_id, source|
+    begin
+        puts(source_id)
+        build(source_id, source)
+    rescue => e
+        puts "Error during processing: #{$!}"
+        puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+    end
 }
