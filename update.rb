@@ -229,7 +229,7 @@ def build(source_id, source)
     ontology_overwrite = source['sources']['full']['ontology']['data'] || {}
     ontology.deep_merge!(ontology_overwrite)
 
-    pois = JSON.parse(@download_cache.get(data_api_url + '/pois').content)
+    pois = JSON.parse(@download_cache.get(data_api_url + '/pois?short_description=true').content)
     pois_features = pois['features']
 
     mbtiles = source['sources']['partial']['mbtiles']
