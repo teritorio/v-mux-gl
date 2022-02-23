@@ -70,6 +70,7 @@ def pois(pois_geojson, ontology)
             zoom: onto && onto['zoom'],
             style: onto && onto['style'],
             color: color,
+            popup_properties: p['editorial'] && p['editorial']['popup_properties'],
         })
         p['name:latin'] = p['name'] if p.key?('name')
         p.delete('metadata')
@@ -181,6 +182,7 @@ def routes(routes_geojson)
             id: p['metadata']['id'],
             category_ids: category_ids(p['metadata']['category_ids']),
             color: p['display'] && p['display']['color'],
+            popup_properties: p['editorial'] && p['editorial']['popup_properties'],
         })
         p['name:latin'] = p['name'] if p.key?('name')
 
