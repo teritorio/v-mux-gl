@@ -47,22 +47,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8
-        python -m pip install -r requirements.txt -r requirements-test.txt
+        python -m pip install -r vt_merge_proxy/requirements.txt -r vt_merge_proxy/requirements-test.txt
 
     - name: Sanity check with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        python -m flake8 vt_merge_proxy/ --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings
-        python -m flake8 . --count --exit-zero --statistics
+        python -m flake8 vt_merge_proxy/ --count --exit-zero --statistics
 
     - name: Test with pytest
       run: |
-        python -m pytest --cov=package_name --cov-report term --cov-report xml --cov-config .coveragerc --junitxml=testresults.xml
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        flags: unittests
-        env_vars: OS,PYTHON
-        name: Python ${{ matrix.python-version }} on ${{ runner.os }}
+        cd vt_merge_proxy/ && python -m pytest --cov=package_name --cov-report term --cov-report xml --cov-config .coveragerc --junitxml=vt_merge_proxy/testresults.xml
