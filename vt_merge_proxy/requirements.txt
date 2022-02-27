@@ -1,0 +1,9 @@
+git+git://github.com/mapbox/vector-tile-base.git
+pymbtiles
+requests
+fastapi
+uvicorn
+pyyaml
+shapely
+pyproj < 3.0.0 # To be able to install on python:3.9-alpine
+mergedeep

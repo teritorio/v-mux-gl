@@ -1,0 +1,23 @@
+version: '3.0'
+
+services:
+  vt_merge_proxy:
+    build:
+      context: ..
+    volumes:
+      - ..:/app
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  nginx:
+    image: nginx
+    depends_on:
+      - vt_merge_proxy
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx-cache:/cache
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+
+volumes:
+  nginx-cache:
