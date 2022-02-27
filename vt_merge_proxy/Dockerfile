@@ -1,4 +1,4 @@
-FROM python:3.9-alpine
+FROM python:3.9-alpine3.15
 
 RUN apk update && apk add git gcc geos-dev proj-util proj-dev musl-dev
 
