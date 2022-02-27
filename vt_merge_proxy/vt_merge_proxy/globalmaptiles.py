@@ -252,7 +252,7 @@ class GlobalMercator(object):
         "Resolution (meters/pixel) for given zoom level (measured at Equator)"
 
         # return (2 * math.pi * 6378137) / (self.tileSize * 2**zoom)
-        return self.initialResolution / (2 ** zoom)
+        return self.initialResolution / (2**zoom)
 
     def ZoomForPixelSize(self, pixelSize):
         "Maximal scaledown zoom of the pyramid closest to the pixelSize."
@@ -265,13 +265,13 @@ class GlobalMercator(object):
         "Converts TMS tile coordinates to Google Tile coordinates"
 
         # coordinate origin is moved from bottom-left to top-left corner of the extent
-        return tx, (2 ** zoom - 1) - ty
+        return tx, (2**zoom - 1) - ty
 
     def QuadTree(self, tx, ty, zoom):
         "Converts TMS tile coordinates to Microsoft QuadTree"
 
         quadKey = ""
-        ty = (2 ** zoom - 1) - ty
+        ty = (2**zoom - 1) - ty
         for i in range(zoom, 0, -1):
             digit = 0
             mask = 1 << (i - 1)

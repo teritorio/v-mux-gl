@@ -15,7 +15,7 @@ class SourceMBTiles(Source):
         self.src = pymbtiles.MBtiles(mbtiles)
 
     def tile(self, z: int, x: int, y: int, headers, url_params: str):
-        y = 2 ** z - 1 - y
+        y = 2**z - 1 - y
         tile_data = self.src.read_tile(z=z, x=x, y=y)
         if not tile_data:
             return [None, None]

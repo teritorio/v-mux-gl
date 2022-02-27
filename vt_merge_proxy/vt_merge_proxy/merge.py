@@ -117,7 +117,7 @@ def build_feature(merge_tile_layer, f):
     else:
         raise Exception(f.type)
 
-    feature.id = f.id if f.id is not None else random.randrange(2 ** 32)
+    feature.id = f.id if f.id is not None else random.randrange(2**32)
     # FIXME decode/encode to be done only if changed
     f.attributes._decode_attr()
     # FIXME Attribut re-encoding : slowest step
