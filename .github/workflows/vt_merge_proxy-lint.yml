@@ -1,4 +1,4 @@
-name: lint
+name: vt_merge_proxy-lint
 
 on: [push, pull_request]
 

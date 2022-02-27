@@ -1,4 +1,4 @@
-name: tests
+name: vt_merge_proxy-test.yml
 
 on:
   push:
