@@ -11,4 +11,6 @@ services:
     build: expire
     volumes:
       - ./data:/data
+    environment:
+      - HOST=nginx
     command: bash -c 'ruby ./get_tiles.rb /data/config.yaml http://nginx/ bypass'

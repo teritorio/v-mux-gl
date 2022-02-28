@@ -11,10 +11,8 @@ docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml build
 
 ```yaml
 sources:
-    default:
-        hosts:
-            - localhost
-            - 127.0.0.1
+    foo:
+        key: fi787or6ej8famrejfffp
         polygon: dax.geojson
 
         sources:

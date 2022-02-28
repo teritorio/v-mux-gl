@@ -49,6 +49,7 @@ def get_tiles(server_uri, request_uri, cache_bypass_header, bbox)
     }
 end
 
+host = ENV['HOST']
 config, server_url, cache_bypass_header = *ARGV
 server_uri = URI(server_url)
 config = YAML.safe_load(File.read(config), aliases: true)
@@ -60,8 +61,7 @@ config['sources'].each{ |id, source|
     bbox = config['bbox_line']['coordinates']
     puts bbox.inspect
 
-    key = source['sources']['full']['key']
-    host = source['hosts'][0]
+    key = source['key']
     url_template = "http://#{host}/data/#{id}/__z__/__x__/__y__.pbf?key=#{key}"
     request_uri = URI(url_template)
 
