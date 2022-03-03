@@ -45,20 +45,17 @@ def pois(pois_geojson, ontology)
     missing_classes = Set.new()
     pois_geojson = pois_geojson.select{ |feature|
         display = feature['properties']['display']
-        display && display['tourism_style_class'] && display['tourism_style_class'] != ''
+        display && feature['geometry'] && feature['geometry']['type'] && display['tourism_style_class'] && display['tourism_style_class'] != ''
     }.collect{ |feature|
         p = feature['properties']
         id = p['metadata']['id']
         superclass, class_, subclass = p['display']['tourism_style_class']
-        color = p['display'] && p['display']['color']
-        if !color then
-            begin
-                onto = subclass ? ontology['superclass'][superclass]['class'][class_]['subclass'][subclass] : class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
-                raise if !onto
-            rescue
-                missing_classes << "#{superclass}/#{class_}/#{subclass}"
-                next
-            end
+        begin
+            onto = subclass ? ontology['superclass'][superclass]['class'][class_]['subclass'][subclass] : class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
+            raise if !onto
+        rescue
+            missing_classes << "#{superclass}/#{class_}/#{subclass}"
+            next
         end
         p = p.merge({
             id: id,
@@ -69,7 +66,7 @@ def pois(pois_geojson, ontology)
             priority: onto && onto['priority'],
             zoom: onto && onto['zoom'],
             style: onto && onto['style'],
-            color: color,
+            color: p['display'] && p['display']['color'],
             popup_properties: p['editorial'] && p['editorial']['popup_properties'],
         })
         p['name:latin'] = p['name'] if p.key?('name')
@@ -82,7 +79,7 @@ def pois(pois_geojson, ontology)
             properties: Hash[p.collect{ |k, v| [k, v && v.kind_of?(Array) ? v.join(';') : v] }],
             geometry: feature['geometry'],
         }
-    }
+    }.compact
 
     missing_classes.each{ |mc|
         STDERR.puts "Missing #{mc}"
