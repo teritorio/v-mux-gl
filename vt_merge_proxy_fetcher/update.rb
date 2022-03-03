@@ -226,12 +226,15 @@ def build(source_id, source)
     ontology_overwrite = source['sources']['full']['ontology']['data'] || {}
     ontology.deep_merge!(ontology_overwrite)
 
+    puts('- fetch from API')
     pois = JSON.parse(@download_cache.get(data_api_url + '/pois?short_description=true').content)
     pois_features = pois['features']
 
     mbtiles = source['sources']['partial']['mbtiles']
 
+    puts('- Convert POIs')
     pois_data, features_data = pois(pois_features, ontology)
+    puts('- Convert Routes')
     features_data += routes(pois_features)
 
     pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
