@@ -45,7 +45,12 @@ def pois(pois_geojson, ontology)
     missing_classes = Set.new()
     pois_geojson = pois_geojson.select{ |feature|
         display = feature['properties']['display']
-        display && feature['geometry'] && feature['geometry']['type'] && display['tourism_style_class'] && display['tourism_style_class'] != ''
+
+        (
+            display &&
+            feature['geometry'] && feature['geometry']['type'] &&
+            (feature['geometry']['type'] != 'Point' || display['tourism_style_class'] && display['tourism_style_class'] != '')
+        )
     }.collect{ |feature|
         p = feature['properties']
         id = p['metadata']['id']
@@ -55,7 +60,6 @@ def pois(pois_geojson, ontology)
             raise if !onto
         rescue
             missing_classes << "#{superclass}/#{class_}/#{subclass}"
-            next
         end
         p = p.merge({
             id: id,
