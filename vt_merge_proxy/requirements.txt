@@ -1,4 +1,4 @@
-git+git://github.com/mapbox/vector-tile-base.git
+git+https://github.com/mapbox/vector-tile-base.git
 pymbtiles
 requests
 fastapi
