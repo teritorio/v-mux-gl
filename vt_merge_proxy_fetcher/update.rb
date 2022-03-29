@@ -23,12 +23,10 @@ end
 
 def menu(url, json)
     menu = JSON.parse(@download_cache.get(url).content)
-    classes = menu.select{ |m|
+    classes = menu.collect{ |m|
         m['category']
-    }.collect{|m|
-        m['category']
-    }.select{ |m|
-        m['tourism_style_merge']
+    }.compact.select{ |m|
+        m['tourism_style_merge'] && m['tourism_style_class']
     }.collect{ |m|
         m['tourism_style_class']
     }.sort.uniq
