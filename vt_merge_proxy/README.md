@@ -35,4 +35,6 @@ isort vt_merge_proxy/
 black vt_merge_proxy/
 flake8 vt_merge_proxy/
 mypy vt_merge_proxy/
+
+python -m pytest --cov=package_name --cov-report term --cov-report xml --cov-config .coveragerc --junitxml=vt_merge_proxy/testresults.xml
 ```
