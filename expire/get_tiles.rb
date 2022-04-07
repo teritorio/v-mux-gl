@@ -25,7 +25,7 @@ end
 def download_url(server_uri, request_uri, cache_bypass_header)
     ret = Net::HTTP.start(server_uri.hostname, server_uri.port) {|http|
         req = Net::HTTP::Get.new(request_uri)
-        req['cache_bypass_header'] = 'true'
+        req[cache_bypass_header] = 'true'
         http.request(req)
     }
     if ret.code != '200' then
