@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 
 import vector_tile_base  # type: ignore
 
+from .prometheus import merge_instruments as prometheus_merge_instruments
 from .tile_in_poly import TileInPoly
 
 
@@ -140,6 +141,14 @@ def build_tile(model, layer_features: Dict[str, List[object]]):
     return model
 
 
+(
+    prometheus_summary_fetch_full,
+    prometheus_summary_fetch_partial,
+    prometheus_summary_merge,
+    prometheus_summary_build,
+) = prometheus_merge_instruments()
+
+
 def merge_tile(
     min_zoom,
     full,
@@ -152,9 +161,10 @@ def merge_tile(
     url_params: str,
     tile_in_poly: Optional[TileInPoly],
 ):
-    full_tile, full_raw_tile = full.tile(
-        z=z, x=x, y=y, headers=headers, url_params=url_params
-    )
+    with prometheus_summary_fetch_full[z].time():
+        full_tile, full_raw_tile = full.tile(
+            z=z, x=x, y=y, headers=headers, url_params=url_params
+        )
     if z < min_zoom:
         return full_raw_tile
 
@@ -164,76 +174,82 @@ def merge_tile(
     if tile_in_poly and tile_in_poly.is_tile_inside_poly(z, x, y):
         tile_in_poly = None  # Disable geo filter
 
-    partial_tile, partial_raw_tile = partial.tile(
-        z=z, x=x, y=y, headers=headers, url_params=url_params
-    )
+    with prometheus_summary_fetch_partial[z].time():
+        partial_tile, partial_raw_tile = partial.tile(
+            z=z, x=x, y=y, headers=headers, url_params=url_params
+        )
 
     full_features = {}
     full_features_same = {}
     partial_features = {}
-    for layer, layer_config in layers.items():
-        if full_tile:
-            full_tile_layer = layer_extract(full_tile, layer)
-            if full_tile_layer:
-                if layer_config.fields:
-                    full_features[layer] = exclude_features(
-                        layer_config.fields,
-                        full_tile_layer.features,
-                        layer_config.classes,
-                        tile_in_poly and tile_in_poly.point_in_poly(z, x, y),
-                    )
-                    full_features_same[layer] = len(full_features[layer]) == len(
-                        full_tile_layer.features
-                    )
+    with prometheus_summary_merge[z].time():
+        for layer, layer_config in layers.items():
+            if full_tile:
+                full_tile_layer = layer_extract(full_tile, layer)
+                if full_tile_layer:
+                    if layer_config.fields:
+                        full_features[layer] = exclude_features(
+                            layer_config.fields,
+                            full_tile_layer.features,
+                            layer_config.classes,
+                            tile_in_poly and tile_in_poly.point_in_poly(z, x, y),
+                        )
+                        full_features_same[layer] = len(full_features[layer]) == len(
+                            full_tile_layer.features
+                        )
+                    else:
+                        full_features[layer] = full_tile_layer.features
+                        full_features_same[layer] = True
                 else:
-                    full_features[layer] = full_tile_layer.features
-                    full_features_same[layer] = True
+                    full_features[layer] = []
+
+            if partial_tile:
+                partial_tile_layer = layer_extract(partial_tile, layer)
+                if partial_tile_layer:
+                    if layer_config.fields:
+                        partial_features[layer] = include_features(
+                            layer_config.fields,
+                            partial_tile_layer.features,
+                            layer_config.classes,
+                            tile_in_poly and tile_in_poly.point_in_poly(z, x, y),
+                        )
+                    else:
+                        partial_features[layer] = partial_tile_layer.features
+                else:
+                    partial_features[layer] = []
+
+        if len(list(filter(lambda f: f, partial_features))) == 0:
+            if full_tile is None:
+                return None
+            elif len(full_features) == 0:
+                return full_raw_tile
+            elif all(full_features_same.values()):
+                return full_raw_tile
             else:
-                full_features[layer] = []
+                with prometheus_summary_build[z].time():
+                    merge_features = build_tile(full_tile, full_features)
+                    binary = merge_features.serialize()
+                return binary
 
-        if partial_tile:
-            partial_tile_layer = layer_extract(partial_tile, layer)
-            if partial_tile_layer:
-                if layer_config.fields:
-                    partial_features[layer] = include_features(
-                        layer_config.fields,
-                        partial_tile_layer.features,
-                        layer_config.classes,
-                        tile_in_poly and tile_in_poly.point_in_poly(z, x, y),
-                    )
-                else:
-                    partial_features[layer] = partial_tile_layer.features
+        else:
+            if full_tile is None:
+                return partial_raw_tile
             else:
-                partial_features[layer] = []
+                features = {}
+                for layer in set(
+                    list(full_features.keys()) + list(partial_features.keys())
+                ):
+                    if len(full_features.get(layer, [])) > 0:
+                        features[layer] = rank(
+                            full_features[layer] + partial_features[layer]
+                        )
+                    else:
+                        features[layer] = partial_features[layer]
 
-    if len(list(filter(lambda f: f, partial_features))) == 0:
-        if full_tile is None:
-            return None
-        elif len(full_features) == 0:
-            return full_raw_tile
-        elif all(full_features_same.values()):
-            return full_raw_tile
-        else:
-            merge_features = build_tile(full_tile, full_features)
-            return merge_features.serialize()
-
-    else:
-        if full_tile is None:
-            return partial_raw_tile
-        else:
-            features = {}
-            for layer in set(
-                list(full_features.keys()) + list(partial_features.keys())
-            ):
-                if len(full_features.get(layer, [])) > 0:
-                    features[layer] = rank(
-                        full_features[layer] + partial_features[layer]
-                    )
-                else:
-                    features[layer] = partial_features[layer]
-
-            merge_features = build_tile(full_tile, features)
-            return merge_features.serialize()
+                with prometheus_summary_build[z].time():
+                    merge_features = build_tile(full_tile, features)
+                    binary = merge_features.serialize()
+                return binary
 
 
 def merge_tilejson(

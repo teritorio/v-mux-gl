@@ -7,3 +7,5 @@ pyyaml
 shapely
 pyproj
 mergedeep
+prometheus-client
+prometheus-fastapi-instrumentator

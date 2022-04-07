@@ -10,12 +10,13 @@ from fastapi import FastAPI, Header, HTTPException, Request, Response
 from starlette.responses import RedirectResponse
 
 from .merge import merge_tile, merge_tilejson
+from .prometheus import mount_on as prometheus_mount_on
 from .sources import Source, sourceFactory
 from .style import StyleGL
 from .tile_in_poly import TileInPoly
 
 app = FastAPI()
-
+prometheus_mount_on(app)
 
 config = yaml.load(
     open(os.environ.get("CONFIG", "config.yaml")).read(), Loader=yaml.UnsafeLoader
