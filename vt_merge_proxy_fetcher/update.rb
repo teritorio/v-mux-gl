@@ -20,7 +20,6 @@ def setting(url, polygon)
   File.write(polygon, JSON.pretty_generate(setting['polygon']))
 end
 
-
 def menu(url, json)
   menu = JSON.parse(@download_cache.get(url).content)
   classes = menu.collect{ |m|
@@ -33,37 +32,39 @@ def menu(url, json)
   File.write(json, JSON.pretty_generate(classes))
 end
 
-
 def category_ids(ids)
-  ids && ';' + ids.join(';') + ';'
+  ids && (';' + ids.join(';') + ';')
 end
 
-
 def pois(pois_geojson, ontology)
-  missing_classes = Set.new()
+  missing_classes = Set.new
   pois_geojson = pois_geojson.select{ |feature|
     display = feature['properties']['display']
 
     (
       display &&
       feature['geometry'] && feature['geometry']['type'] &&
-      (feature['geometry']['type'] != 'Point' || display['tourism_style_class'] && display['tourism_style_class'] != '')
+      (feature['geometry']['type'] != 'Point' || (display['tourism_style_class'] && display['tourism_style_class'] != ''))
     )
   }.collect{ |feature|
     p = feature['properties']
     id = p['metadata']['id']
     superclass, class_, subclass = p['display']['tourism_style_class']
     begin
-      onto = subclass ? ontology['superclass'][superclass]['class'][class_]['subclass'][subclass] : class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
+      onto = if subclass
+               ontology['superclass'][superclass]['class'][class_]['subclass'][subclass]
+             else
+               class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
+             end
       raise if !onto
-    rescue
+    rescue StandardError
       missing_classes << "#{superclass}/#{class_}/#{subclass}"
     end
     p = p.merge({
       id: id,
       category_ids: category_ids(p['metadata']['category_ids']),
       superclass: superclass,
-      'class': class_,
+      class: class_,
       subclass: subclass,
       priority: onto && onto['priority'],
       zoom: onto && onto['zoom'],
@@ -78,13 +79,13 @@ def pois(pois_geojson, ontology)
 
     {
       type: 'Feature',
-      properties: Hash[p.collect{ |k, v| [k, v && v.kind_of?(Array) ? v.join(';') : v] }],
+      properties: p.collect{ |k, v| [k, v && v.is_a?(Array) ? v.join(';') : v] }.to_h,
       geometry: feature['geometry'],
     }
   }.compact
 
   missing_classes.each{ |mc|
-    STDERR.puts "Missing #{mc}"
+    warn "Missing #{mc}"
   }
 
   groups = pois_geojson.group_by{ |feature|
@@ -93,7 +94,6 @@ def pois(pois_geojson, ontology)
 
   [groups[true] || [], groups[false] || []]
 end
-
 
 def merge_compact_multilinestring(tracks)
   # Count tracks at connection points
@@ -106,14 +106,14 @@ def merge_compact_multilinestring(tracks)
   # Exclude non mergable tracks
   merge_tracks = []
   ends.each{ |p, tracks|
-    if tracks.size != 2 then
+    if tracks.size != 2
       merge_tracks += tracks
       ends.delete(p)
     end
   }
-  merge_tracks = merge_tracks.uniq - ends.collect{ |p, tracks| tracks }.flatten(1)
+  merge_tracks = merge_tracks.uniq - ends.collect{ |_p, tracks| tracks }.flatten(1)
 
-  while(ends.size > 0) do
+  while ends.size > 0
     p = ends.keys[0]
     tracks = ends[p]
     ends.delete(p)
@@ -121,23 +121,15 @@ def merge_compact_multilinestring(tracks)
     # Merge consecutive linestring
     tracks_0 = tracks[0]
     tracks_1 = tracks[1]
-    if tracks[0][-1] != p then
-      tracks[0] = tracks[0].reverse
-    end
-    if tracks[1][0] != p then
-      tracks[1] = tracks[1].reverse
-    end
+    tracks[0] = tracks[0].reverse if tracks[0][-1] != p
+    tracks[1] = tracks[1].reverse if tracks[1][0] != p
 
     merge_track = tracks[0] + tracks[1][1..-1]
 
     # Update ends
-    if ends.include?(merge_track[0]) || ends.include?(merge_track[-1]) then
-      if ends.include?(merge_track[0]) then
-        ends[merge_track[0]] = ends[merge_track[0]] - [tracks_0] + [merge_track]
-      end
-      if ends.include?(merge_track[-1]) then
-        ends[merge_track[-1]] = ends[merge_track[-1]] - [tracks_1] + [merge_track]
-      end
+    if ends.include?(merge_track[0]) || ends.include?(merge_track[-1])
+      ends[merge_track[0]] = ends[merge_track[0]] - [tracks_0] + [merge_track] if ends.include?(merge_track[0])
+      ends[merge_track[-1]] = ends[merge_track[-1]] - [tracks_1] + [merge_track] if ends.include?(merge_track[-1])
     else
       merge_tracks << merge_track
     end
@@ -145,7 +137,6 @@ def merge_compact_multilinestring(tracks)
 
   merge_tracks
 end
-
 
 def gpx2geojson(gpx)
   doc = Nokogiri::XML(gpx)
@@ -192,14 +183,13 @@ def routes(routes_geojson)
     p.delete('editorial')
     p.delete('display')
 
-    feature['properties'] = Hash[p.collect{ |k, v| [k, v && v.kind_of?(Array) ? v.join(';') : v] }]
+    feature['properties'] = p.collect{ |k, v| [k, v && v.is_a?(Array) ? v.join(';') : v] }.to_h
     feature
   }
 end
 
-
 def tippecanoe(pois_json, pois_layer, features_json, features_layer, mbtiles, attribution)
-  system("""
+  system("
     tippecanoe --force \
       --named-layer=#{pois_layer}:#{pois_json} \
       --named-layer=#{features_layer}:#{features_json} \
@@ -207,14 +197,13 @@ def tippecanoe(pois_json, pois_layer, features_json, features_layer, mbtiles, at
       --convert-stringified-ids-to-numbers \
       --attribution='#{attribution}' \
       -o #{mbtiles}
-  """)
+  ")
 
-  # TODO limiter par zoom dans le tuiles : ne marche pas
+  # TODO: limiter par zoom dans le tuiles : ne marche pas
   # -j '{ "*": [  ">=", "$zoom", ["get", "zoom"] ] }'
 end
 
-
-def build(source_id, source)
+def build(_source_id, source)
   fetcher = source['sources']['partial']['fetcher']
   data_api_url = fetcher['data_api_url']
 
@@ -261,7 +250,7 @@ config['sources'].each{ |source_id, source|
   begin
     puts(source_id)
     build(source_id, source)
-  rescue => e
+  rescue StandardError => e
     puts "Error during processing: #{$!}"
     puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
   end

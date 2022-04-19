@@ -11,24 +11,24 @@ require 'webcache'
 
 
 def setting(url)
-  setting = JSON.parse(@download_cache.get(url).content)
+  JSON.parse(@download_cache.get(url).content)
 end
 
 def deg2num(lon_deg, lat_deg, zoom)
   lat_rad = lat_deg / 180 * Math::PI
-  n = 2.0 ** zoom
+  n = 2.0**zoom
   xtile = ((lon_deg + 180.0) / 360.0 * n).to_i
-  ytile = ((1.0 - Math.log(Math.tan(lat_rad) + (1 / Math.cos(lat_rad))) / Math::PI) / 2.0 * n).to_i
+  ytile = ((1.0 - (Math.log(Math.tan(lat_rad) + (1 / Math.cos(lat_rad))) / Math::PI)) / 2.0 * n).to_i
   [xtile, ytile]
 end
 
 def download_url(server_uri, request_uri, cache_bypass_header)
-  ret = Net::HTTP.start(server_uri.hostname, server_uri.port) {|http|
+  ret = Net::HTTP.start(server_uri.hostname, server_uri.port) { |http|
     req = Net::HTTP::Get.new(request_uri)
     req[cache_bypass_header] = 'true'
     http.request(req)
   }
-  if ret.code != '200' then
+  if ret.code != '200'
     puts request_uri
     puts ret.inspect
   end
@@ -40,8 +40,8 @@ def get_tiles(server_uri, request_uri, cache_bypass_header, bbox)
     puts(zoom)
     minx, miny = deg2num(bbox[0][0], bbox[1][1], zoom)
     maxx, maxy = deg2num(bbox[1][0], bbox[0][1], zoom)
-    [minx - 2, 0].max.upto([maxx + 2, 2 ** zoom - 1].min).each{ |x|
-      [miny - 2, 0].max.upto([maxy + 2, 2 ** zoom - 1].min).each{ |y|
+    [minx - 2, 0].max.upto([maxx + 2, (2**zoom) - 1].min).each{ |x|
+      [miny - 2, 0].max.upto([maxy + 2, (2**zoom) - 1].min).each{ |y|
         request_uri.path = path_template.gsub('__x__', x.to_s).sub('__y__', y.to_s).gsub('__z__', zoom.to_s)
         download_url(server_uri, request_uri, cache_bypass_header)
       }
