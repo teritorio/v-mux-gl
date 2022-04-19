@@ -79,7 +79,7 @@ def pois(pois_geojson, ontology)
 
     {
       type: 'Feature',
-      properties: p.collect{ |k, v| [k, v && v.is_a?(Array) ? v.join(';') : v] }.to_h,
+      properties: p.transform_values{ |v| v && v.is_a?(Array) ? v.join(';') : v },
       geometry: feature['geometry'],
     }
   }.compact
@@ -183,7 +183,7 @@ def routes(routes_geojson)
     p.delete('editorial')
     p.delete('display')
 
-    feature['properties'] = p.collect{ |k, v| [k, v && v.is_a?(Array) ? v.join(';') : v] }.to_h
+    feature['properties'] = p.transform_values{ |v| v && v.is_a?(Array) ? v.join(';') : v }
     feature
   }
 end
@@ -211,14 +211,14 @@ def build(_source_id, source)
   setting(data_api_url, polygon)
 
   classes = source['merge_layers']['poi_tourism']['classes']
-  menu(data_api_url + '/menu', classes)
+  menu("#{data_api_url}/menu", classes)
 
   ontology = JSON.parse(@download_cache.get(source['sources']['full']['ontology']['url']).content)
   ontology_overwrite = source['sources']['full']['ontology']['data'] || {}
   ontology.deep_merge!(ontology_overwrite)
 
   puts('- fetch from API')
-  pois = JSON.parse(@download_cache.get(data_api_url + '/pois?short_description=true').content)
+  pois = JSON.parse(@download_cache.get("#{data_api_url}/pois?short_description=true").content)
   pois_features = pois['features']
 
   mbtiles = source['sources']['partial']['mbtiles']
