@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from collections import defaultdict
 from dataclasses import dataclass
@@ -105,26 +106,30 @@ class MergeConfig(object):
 merge_config: Dict[str, Dict[str, Any]] = defaultdict(dict)
 for (key, source_id_confs) in config_by_key.items():
     for (source_id, source_conf) in source_id_confs.items():
-        tile_in_poly = None
-        if "polygon" in source_conf:
-            tile_in_poly = TileInPoly(open(source_conf["polygon"]))
+        try:
+            tile_in_poly = None
+            if "polygon" in source_conf:
+                tile_in_poly = TileInPoly(open(source_conf["polygon"]))
 
-        merge_config[key][source_id] = MergeConfig(
-            sources=[
-                sourceFactory(source) for source in source_conf["sources"].values()
-            ],
-            min_zoom=int(source_conf["output"]["min_zoom"]),
-            tile_in_poly=tile_in_poly,
-            layers={
-                layer: LayerConfig(
-                    fields=merge_layer and merge_layer.get("fields"),
-                    classes=merge_layer
-                    and merge_layer.get("classes")
-                    and json.loads(open(merge_layer["classes"], "r").read()),
-                )
-                for layer, merge_layer in source_conf["merge_layers"].items()
-            },
-        )
+            merge_config[key][source_id] = MergeConfig(
+                sources=[
+                    sourceFactory(source) for source in source_conf["sources"].values()
+                ],
+                min_zoom=int(source_conf["output"]["min_zoom"]),
+                tile_in_poly=tile_in_poly,
+                layers={
+                    layer: LayerConfig(
+                        fields=merge_layer and merge_layer.get("fields"),
+                        classes=merge_layer
+                        and merge_layer.get("classes")
+                        and json.loads(open(merge_layer["classes"], "r").read()),
+                    )
+                    for layer, merge_layer in source_conf["merge_layers"].items()
+                },
+            )
+        except Exception:
+            logging.exception("Bad config for {source_id}")
+            merge_config[key][source_id] = HTTPException(status_code=503)
 
 
 @app.get("/data/{data_id}/{z}/{x}/{y}.pbf")
@@ -134,6 +139,8 @@ async def tile(data_id: str, z: int, x: int, y: int, key: str, request: Request)
             raise HTTPException(status_code=404)
 
         mc = merge_config[key][data_id]
+        if isinstance(mc, Exception):
+            raise mc
         data = merge_tile(
             mc.min_zoom,
             mc.sources[0],
@@ -161,6 +168,8 @@ async def tilejson(data_id: str, key: str, request: Request):
     mc = merge_config.get(key) and merge_config[key].get(data_id)
     if not mc:
         raise HTTPException(status_code=404)
+    elif isinstance(mc, Exception):
+        raise mc
 
     try:
         path = f"{public_base_path}/data/{data_id}/{{z}}/{{x}}/{{y}}.pbf"
