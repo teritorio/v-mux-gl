@@ -45,7 +45,7 @@ server:
 # Initialize data
 Setup configuration in `data` and fetch data:
 ```
-docker-compose -f docker-compose-tools.yaml run --rm vt_merge_proxy_fetcher
+docker-compose -f docker-compose-tools.yaml run --rm fetcher
 ```
 
 # Run
@@ -63,7 +63,7 @@ docker-compose -f docker-compose-tools.yaml run --rm expire
 
 Get and switch to new data:
 ```
-docker-compose -f docker-compose-tools.yaml run --rm vt_merge_proxy_fetcher
+docker-compose -f docker-compose-tools.yaml run --rm fetcher
 docker-compose restart
 ```
 

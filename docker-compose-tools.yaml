@@ -1,8 +1,8 @@
 version: "3.3"
 
 services:
-  vt_merge_proxy_fetcher:
-    build: vt_merge_proxy_fetcher
+  fetcher:
+    build: fetcher
     volumes:
       - ./data:/data
     command: bash -c 'ruby ./update.rb /data/config.yaml'
