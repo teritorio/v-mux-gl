@@ -1,9 +1,9 @@
 version: "3.3"
 
 services:
-  vt_merge_proxy:
+  merge_proxy:
     build:
-      context: vt_merge_proxy
+      context: merge_proxy
     environment:
       - CONFIG=/data/config.yaml
     volumes:
@@ -18,7 +18,7 @@ services:
     ports:
       - ${NGINX_PORT:-8080}:80
     depends_on:
-      - vt_merge_proxy
+      - merge_proxy
 #    restart: always
 
 volumes:

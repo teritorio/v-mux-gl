@@ -1,4 +1,4 @@
-# vt_merge_proxy
+# merge_proxy
 
 Vector tiles proxy to merge datasources
 
@@ -10,7 +10,7 @@ pip install -r requirements.txt
 
 Run with a ASGI compatible server. Eg uvicorn:
 ```
-uvicorn --workers 4 vt_merge_proxy.server:app
+uvicorn --workers 4 merge_proxy.server:app
 ```
 A cache must me be provided on top to improve performance.
 
@@ -26,15 +26,15 @@ pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
 
 Run
 ```
-CONFIG=config.yaml uvicorn vt_merge_proxy.server:app --reload
+CONFIG=config.yaml uvicorn merge_proxy.server:app --reload
 ```
 
 Before commit check:
 ```
-isort vt_merge_proxy/
-black vt_merge_proxy/
-flake8 vt_merge_proxy/
-mypy vt_merge_proxy/
+isort merge_proxy/
+black merge_proxy/
+flake8 merge_proxy/
+mypy merge_proxy/
 
-python -m pytest --cov=package_name --cov-report term --cov-report xml --cov-config .coveragerc --junitxml=vt_merge_proxy/testresults.xml
+python -m pytest --cov=package_name --cov-report term --cov-report xml --cov-config .coveragerc --junitxml=merge_proxy/testresults.xml
 ```
