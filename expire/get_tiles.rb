@@ -53,16 +53,21 @@ config, server_url, cache_bypass_header = *ARGV
 server_uri = URI(server_url)
 config = YAML.safe_load(File.read(config), aliases: true)
 config['sources'].each{ |id, source|
-  puts(id)
+  begin
+    puts(id)
 
-  data_api_url = source['sources']['partial']['fetcher']['data_api_url']
-  config = setting(data_api_url)
-  bbox = config['bbox_line']['coordinates']
-  puts bbox.inspect
+    data_api_url = source['sources']['partial']['fetcher']['data_api_url']
+    config = setting(data_api_url)
+    bbox = config['bbox_line']['coordinates']
+    puts bbox.inspect
 
-  key = source['key']
-  url_template = "#{server_uri}/data/#{id}/__z__/__x__/__y__.pbf?key=#{key}"
-  request_uri = URI(url_template)
+    key = source['key']
+    url_template = "#{server_uri}/data/#{id}/__z__/__x__/__y__.pbf?key=#{key}"
+    request_uri = URI(url_template)
 
-  get_tiles(server_uri, request_uri, cache_bypass_header, bbox)
+    get_tiles(server_uri, request_uri, cache_bypass_header, bbox)
+  rescue StandardError => e
+    puts "Error during processing: #{$!}"
+    puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+  end
 }
