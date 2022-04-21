@@ -49,7 +49,10 @@ def get_tiles(server_uri, request_uri, cache_bypass_header, bbox)
   }
 end
 
-config, server_url, cache_bypass_header = *ARGV
+config = ENV['CONFIG']
+server_url = ENV['SERVER']
+cache_bypass_header = ENV['BYPASS']
+
 server_uri = URI(server_url)
 config = YAML.safe_load(File.read(config), aliases: true)
 config['sources'].each{ |id, source|

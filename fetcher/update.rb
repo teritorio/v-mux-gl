@@ -245,7 +245,9 @@ def build(_source_id, source)
 end
 
 
-config = YAML.load(File.read(ARGV[0])) # After update add "aliases: true"
+config = ENV['CONFIG']
+
+config = YAML.load(File.read(config)) # After update add "aliases: true"
 config['sources'].each{ |source_id, source|
   begin
     puts(source_id)
