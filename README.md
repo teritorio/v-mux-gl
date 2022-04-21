@@ -67,9 +67,19 @@ docker-compose -f docker-compose-tools.yaml run --rm fetcher
 docker-compose restart
 ```
 
+Partial fetch
+```
+docker-compose -f docker-compose-tools.yaml run --rm fetcher
+```
+
 Update the tiles cache in nginx:
 ```
 docker-compose -f docker-compose-tools.yaml run --rm expire
+```
+
+Partial expire
+```
+docker-compose -f docker-compose-tools.yaml run --rm expire sh -c 'ruby ./get_tiles.rb foo'
 ```
 
 

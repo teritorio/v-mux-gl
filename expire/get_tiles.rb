@@ -53,9 +53,11 @@ config = ENV['CONFIG']
 server_url = ENV['SERVER']
 cache_bypass_header = ENV['BYPASS']
 
+ids = ARGV
+
 server_uri = URI(server_url)
 config = YAML.safe_load(File.read(config), aliases: true)
-config['sources'].each{ |id, source|
+config['sources'].select{ |id, _source| ids.empty? || ids.include?(id) }.each{ |id, source|
   begin
     puts(id)
 

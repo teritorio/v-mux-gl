@@ -246,9 +246,11 @@ end
 
 
 config = ENV['CONFIG']
-
 config = YAML.load(File.read(config)) # After update add "aliases: true"
-config['sources'].each{ |source_id, source|
+
+ids = ARGV
+
+config['sources'].select{ |id, _source| ids.empty? || ids.include?(id) }.each{ |source_id, source|
   begin
     puts(source_id)
     build(source_id, source)
