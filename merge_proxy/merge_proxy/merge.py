@@ -197,9 +197,9 @@ def merge_tile(
                                 layer_config.classes,
                                 tile_in_poly and tile_in_poly.point_in_poly(z, x, y),
                             )
-                            full_features_same[layer] = len(full_features[layer]) == len(
-                                full_tile_layer.features
-                            )
+                            full_features_same[layer] = len(
+                                full_features[layer]
+                            ) == len(full_tile_layer.features)
                         else:
                             full_features[layer] = full_tile_layer.features
                             full_features_same[layer] = True
