@@ -45,7 +45,7 @@ server:
 # Initialize data
 Setup configuration in `data` and fetch data:
 ```
-docker-compose -f docker-compose-tools.yaml run --rm fetcher
+docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm fetcher
 ```
 
 # Run
@@ -55,7 +55,7 @@ docker-compose up -d
 
 Fill the tiles cache in nginx:
 ```
-docker-compose -f docker-compose-tools.yaml run --rm expire
+docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm expire
 ```
 
 
@@ -63,23 +63,23 @@ docker-compose -f docker-compose-tools.yaml run --rm expire
 
 Get and switch to new data:
 ```
-docker-compose -f docker-compose-tools.yaml run --rm fetcher
+docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm fetcher
 docker-compose restart
 ```
 
 Partial fetch
 ```
-docker-compose -f docker-compose-tools.yaml run --rm fetcher bash -c 'ruby ./update.rb foo'
+docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm fetcher bash -c 'ruby ./update.rb foo'
 ```
 
 Update the tiles cache in nginx:
 ```
-docker-compose -f docker-compose-tools.yaml run --rm expire
+docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm expire
 ```
 
 Partial expire
 ```
-docker-compose -f docker-compose-tools.yaml run --rm expire sh -c 'ruby ./get_tiles.rb foo'
+docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm expire sh -c 'ruby ./get_tiles.rb foo'
 ```
 
 
