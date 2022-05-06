@@ -1,4 +1,5 @@
 import gzip
+from typing import Dict
 
 import pymbtiles  # type: ignore
 import requests
@@ -6,7 +7,7 @@ import vector_tile_base  # type: ignore
 
 
 class Source:
-    def tilejson(self, headers, url_params: str):
+    def tilejson(self, headers: Dict[str, str], url_params: str):
         return {}
 
 
@@ -14,7 +15,7 @@ class SourceMBTiles(Source):
     def __init__(self, mbtiles: str):
         self.src = pymbtiles.MBtiles(mbtiles)
 
-    def tile(self, z: int, x: int, y: int, headers, url_params: str):
+    def tile(self, z: int, x: int, y: int, headers: Dict[str, str], url_params: str):
         y = 2**z - 1 - y
         tile_data = self.src.read_tile(z=z, x=x, y=y)
         if not tile_data:
@@ -23,7 +24,7 @@ class SourceMBTiles(Source):
             tile_data = gzip.decompress(tile_data)
             return [vector_tile_base.VectorTile(tile_data), tile_data]
 
-    def tilejson(self, headers, url_params: str):
+    def tilejson(self, headers: Dict[str, str], url_params: str):
         return self.src.meta
 
 
@@ -31,7 +32,7 @@ class SourceXYZ(Source):
     def __init__(self, template_url: str):
         self.template_url = template_url
 
-    def tile(self, z: int, x: int, y: int, headers, url_params: str):
+    def tile(self, z: int, x: int, y: int, headers: Dict[str, str], url_params: str):
         url = self.template_url.format_map({"z": z, "x": x, "y": y})
         if url_params:
             url = f"{url}?{url_params}"
@@ -55,7 +56,7 @@ class SourceTileJSON(SourceXYZ):
 
         super().__init__(template_url)
 
-    def tilejson(self, headers, url_params: str):
+    def tilejson(self, headers: Dict[str, str], url_params: str):
         return self._tilejson
 
 

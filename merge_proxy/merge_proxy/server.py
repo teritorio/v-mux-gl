@@ -132,6 +132,13 @@ for (key, source_id_confs) in config_by_key.items():
             merge_config[key][source_id] = HTTPException(status_code=503)
 
 
+def headers(request: Request) -> Dict[str, str]:
+    headers = dict(request.headers)
+    if "host" in headers:
+        del headers["host"]
+    return headers
+
+
 @app.get("/data/{data_id}/{z}/{x}/{y}.pbf")
 async def tile(data_id: str, z: int, x: int, y: int, key: str, request: Request):
     try:
@@ -149,7 +156,7 @@ async def tile(data_id: str, z: int, x: int, y: int, key: str, request: Request)
             z,
             x,
             y,
-            headers=request.headers,
+            headers=headers(request),
             url_params=str(request.query_params),
             tile_in_poly=mc.tile_in_poly,
         )
@@ -186,7 +193,7 @@ async def tilejson(data_id: str, key: str, request: Request):
             mc.sources[0],
             mc.sources[1],
             mc.layers.keys(),
-            headers=request.headers,
+            headers=headers(request),
             url_params=str(request.query_params),
         )
     except requests.exceptions.HTTPError as error:

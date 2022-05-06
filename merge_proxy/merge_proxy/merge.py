@@ -159,7 +159,7 @@ def merge_tile(
     z: int,
     x: int,
     y: int,
-    headers,
+    headers: Dict[str, str],
     url_params: str,
     tile_in_poly: Optional[TileInPoly],
 ):
@@ -258,7 +258,12 @@ def merge_tile(
 
 
 def merge_tilejson(
-    public_tile_urls, full, partial, layers: List[str], headers, url_params: str
+    public_tile_urls,
+    full,
+    partial,
+    layers: List[str],
+    headers: Dict[str, str],
+    url_params: str,
 ):
     full_tilejson = full.tilejson(headers, url_params)
     partial_tilejson = partial.tilejson(headers, url_params)
