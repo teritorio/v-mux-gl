@@ -25,9 +25,9 @@ def menu(url, json)
   classes = menu.collect{ |m|
     m['category']
   }.compact.select{ |m|
-    m['tourism_style_merge'] && m['tourism_style_class']
+    m['style_merge'] && m['style_class']
   }.collect{ |m|
-    m['tourism_style_class']
+    m['style_class']
   }.sort.uniq
   File.write(json, JSON.pretty_generate(classes))
 end
@@ -44,12 +44,12 @@ def pois(pois_geojson, ontology)
     (
       display &&
       feature['geometry'] && feature['geometry']['type'] &&
-      (feature['geometry']['type'] != 'Point' || (display['tourism_style_class'] && display['tourism_style_class'] != ''))
+      (feature['geometry']['type'] != 'Point' || (display['style_class'] && display['style_class'] != ''))
     )
   }.collect{ |feature|
     p = feature['properties']
     id = p['metadata']['id']
-    superclass, class_, subclass = p['display']['tourism_style_class']
+    superclass, class_, subclass = p['display']['style_class']
     begin
       onto = if subclass
                ontology['superclass'][superclass]['class'][class_]['subclass'][subclass]
@@ -241,7 +241,7 @@ def build(_source_id, source)
   }))
 
   attribution = fetcher['attribution']
-  tippecanoe(pois_json, 'poi_tourism', features_json, 'features_tourism', mbtiles, attribution)
+  tippecanoe(pois_json, 'poi_tourism', features_json, 'features', mbtiles, attribution)
 end
 
 
