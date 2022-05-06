@@ -22,7 +22,6 @@ prometheus_mount_on(app)
 config = yaml.load(
     open(os.environ.get("CONFIG", "config.yaml")).read(), Loader=yaml.UnsafeLoader
 )
-print(config)
 
 if not config.get("server"):
     config["server"] = {}
