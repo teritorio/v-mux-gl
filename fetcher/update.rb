@@ -188,10 +188,12 @@ def routes(routes_geojson)
   }
 end
 
-def tippecanoe(pois_json, pois_layer, features_json, features_layer, mbtiles, attribution)
+def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attribution)
   system("
-    tippecanoe --force \
-      --named-layer=#{pois_layer}:#{pois_json} \
+    tippecanoe --force \\" +
+      pois_layers.collect{ |pois_json, pois_layer|
+        "--named-layer=#{pois_layer}:#{pois_json} \\"
+      }.join("\n") + "\
       --named-layer=#{features_layer}:#{features_json} \
       --use-attribute-for-id=id \
       --convert-stringified-ids-to-numbers \
@@ -210,29 +212,35 @@ def build(_source_id, source)
   polygon = source['polygon']
   setting(data_api_url, polygon)
 
-  classes = source['merge_layers']['poi_tourism']['classes']
-  menu("#{data_api_url}/menu", classes)
-
-  ontology = JSON.parse(@download_cache.get(source['sources']['full']['ontology']['url']).content)
-  ontology_overwrite = source['sources']['full']['ontology']['data'] || {}
-  ontology.deep_merge!(ontology_overwrite)
-
-  puts('- fetch from API')
-  pois = JSON.parse(@download_cache.get("#{data_api_url}/pois?short_description=true").content)
-  pois_features = pois['features']
-
   mbtiles = source['sources']['partial']['mbtiles']
 
-  puts('- Convert POIs')
-  pois_data, features_data = pois(pois_features, ontology)
-  puts('- Convert Routes')
-  features_data += routes(pois_features)
+  features_data = []
+  pois_layers = source['merge_layers'].compact.collect{ |source_layer_id, source_layer|
+    classes = source_layer['classes']
+    menu("#{data_api_url}/menu", classes)
 
-  pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
-  File.write(pois_json, JSON.pretty_generate({
-    type: 'FeatureCollection',
-    features: pois_data
-  }))
+    ontology = JSON.parse(@download_cache.get(source['sources']['full']['ontology']['url']).content)
+    ontology_overwrite = source['sources']['full']['ontology']['data'] || {}
+    ontology.deep_merge!(ontology_overwrite)
+
+    puts('- fetch from API')
+    pois = JSON.parse(@download_cache.get("#{data_api_url}/pois?short_description=true").content)
+    pois_features = pois['features']
+
+    puts('- Convert POIs')
+    pois_data, poi_features_data = pois(pois_features, ontology)
+    features_data += poi_features_data
+    puts('- Convert Routes')
+    features_data += routes(pois_features)
+
+    pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
+    File.write(pois_json, JSON.pretty_generate({
+      type: 'FeatureCollection',
+      features: pois_data
+    }))
+
+    [pois_json, source_layer_id]
+  }
 
   features_json = mbtiles.gsub('.mbtiles', '-features.geojson')
   File.write(features_json, JSON.pretty_generate({
@@ -241,7 +249,7 @@ def build(_source_id, source)
   }))
 
   attribution = fetcher['attribution']
-  tippecanoe(pois_json, 'poi_tourism', features_json, 'features', mbtiles, attribution)
+  tippecanoe(pois_layers, features_json, 'features', mbtiles, attribution)
 end
 
 
