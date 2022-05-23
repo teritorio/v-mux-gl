@@ -249,6 +249,9 @@ async def style(style_id: str, key: str, request: Request):
         else {},
     )
 
+    if style_config.get("sprite"):
+        style_gl.insert_sprite(style_config.get("sprite"))
+
     for layer in style_config.get("layers") or []:
         insert_before_id = layer.get("insert_before_id")
         style_gl.insert_layer(layer["layer"], before=insert_before_id)
