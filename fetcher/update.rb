@@ -69,7 +69,8 @@ def pois(pois_geojson, ontology)
       priority: onto && onto['priority'],
       zoom: onto && onto['zoom'],
       style: onto && onto['style'],
-      color: p['display'] && p['display']['color'],
+      color_fill: p['display'] && p['display']['color_fill'],
+      color_line: p['display'] && p['display']['color_line'],
       popup_properties: p['editorial'] && p['editorial']['popup_properties'],
     })
     p['name:latin'] = p['name'] if p.key?('name')
@@ -171,7 +172,8 @@ def routes(routes_geojson)
     p.merge!({
       id: p['metadata']['id'],
       category_ids: category_ids(p['metadata']['category_ids']),
-      color: p['display'] && p['display']['color'],
+      color_fill: p['display'] && p['display']['color_fill'],
+      color_line: p['display'] && p['display']['color_line'],
       popup_properties: p['editorial'] && p['editorial']['popup_properties'],
     })
     p['name:latin'] = p['name'] if p.key?('name')
