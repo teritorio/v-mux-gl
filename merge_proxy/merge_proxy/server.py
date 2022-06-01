@@ -253,7 +253,10 @@ async def style(style_id: str, key: str, request: Request):
         style_gl.insert_sprite(style_config.get("sprite"))
 
     for layer in style_config.get("layers") or []:
-        insert_before_id = layer.get("insert_before_id")
-        style_gl.insert_layer(layer["layer"], before=insert_before_id)
+        insert_before_id = None
+        if "insert_before_id" in layer:
+            insert_before_id = layer["insert_before_id"]
+            del layer["insert_before_id"]
+        style_gl.insert_layer(layer, before=insert_before_id)
 
     return style_gl.json()
