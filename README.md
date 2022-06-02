@@ -1,11 +1,22 @@
-vt_merge_proxy_server
+# V-Mux-GL
+Vector Tiles and Style GL Multiplexer.
 
-# Build
+Style
+- Patch style on the fly. Add, remove or replace style layer. Changes come from patch file or from patch derived from other styles. Report style enhancement from one style to an other.
+
+Vector Tiles
+- Add data layers from other sources.
+- Replace selected data in data layer from one source by an other source.
+
+Affect Style and Vector Tiles user by user using API Keys.
+
+
+## Build
 ```
 docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml build
 ```
 
-# Configuration
+## Configuration
 
 `config.yaml`
 
@@ -64,14 +75,13 @@ server:
     public_tile_url_prefixes: []
 ```
 
-
-# Initialize data
+## Initialize data
 Setup configuration in `data` and fetch data:
 ```
 docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm fetcher
 ```
 
-# Run
+## Run
 ```
 docker-compose up -d
 ```
@@ -81,8 +91,7 @@ Fill the tiles cache in nginx:
 docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm expire
 ```
 
-
-# Data update
+## Data update
 
 Get and switch to new data:
 ```
@@ -105,8 +114,7 @@ Partial expire
 docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm expire sh -c 'ruby ./get_tiles.rb foo'
 ```
 
-
-# Serve
+## Serve
 
 Under reverse proxy HTTP header `Host` should contains the original value.
 Header `Forwarded` should also properly set. See https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/
