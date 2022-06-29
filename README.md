@@ -70,6 +70,9 @@ sources:
                         paint:
                             line-color: #ff0000
 
+fetch_http_headers:
+    Secret: foo
+
 server:
     public_base_path:
     public_tile_url_prefixes: []

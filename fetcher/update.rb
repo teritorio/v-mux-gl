@@ -8,20 +8,29 @@ require 'yaml'
 require 'json'
 require 'set'
 require 'deep_merge'
+require 'http'
 require 'webcache'
 require 'nokogiri'
 
+
+config = ENV.fetch('CONFIG', nil)
+@config = YAML.load(File.read(config)) # After update add "aliases: true"
+
+
+def http_get(url)
+  HTTP.headers(@config['fetch_http_headers'] || {}).follow.get(url).body
+end
 
 @download_cache = WebCache.new(life: '6h', dir: '/data/cache')
 
 
 def setting(url, polygon)
-  setting = JSON.parse(@download_cache.get(url).content)
+  setting = JSON.parse(http_get(url))
   File.write(polygon, JSON.pretty_generate(setting['polygon']))
 end
 
 def menu(url, json)
-  menu = JSON.parse(@download_cache.get(url).content)
+  menu = JSON.parse(http_get(url))
   classes = menu.collect{ |m|
     m['category']
   }.compact.select{ |m|
@@ -221,12 +230,12 @@ def build(_source_id, source)
     classes = source_layer['classes']
     menu("#{data_api_url}/menu", classes)
 
-    ontology = JSON.parse(@download_cache.get(source['sources']['full']['ontology']['url']).content)
+    ontology = JSON.parse(http_get(source['sources']['full']['ontology']['url']))
     ontology_overwrite = source['sources']['full']['ontology']['data'] || {}
     ontology.deep_merge!(ontology_overwrite)
 
     puts('- fetch from API')
-    pois = JSON.parse(@download_cache.get("#{data_api_url}/pois?short_description=true").content)
+    pois = JSON.parse(http_get("#{data_api_url}/pois?short_description=true"))
     pois_features = pois['features']
 
     puts('- Convert POIs')
@@ -255,12 +264,9 @@ def build(_source_id, source)
 end
 
 
-config = ENV['CONFIG']
-config = YAML.load(File.read(config)) # After update add "aliases: true"
-
 ids = ARGV
 
-config['sources'].select{ |id, _source| ids.empty? || ids.include?(id) }.each{ |source_id, source|
+@config['sources'].select{ |id, _source| ids.empty? || ids.include?(id) }.each{ |source_id, source|
   begin
     puts(source_id)
     build(source_id, source)
