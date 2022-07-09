@@ -200,17 +200,18 @@ def routes(routes_geojson)
 end
 
 def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attribution)
-  system("
-    tippecanoe --force \\" +
+  system(
+    'tippecanoe --force ' +
       pois_layers.collect{ |pois_json, pois_layer|
-        "--named-layer=#{pois_layer}:#{pois_json} \\"
-      }.join("\n") + "\
+        "--named-layer=#{pois_layer}:#{pois_json} "
+      }.join(' ') + "\
       --named-layer=#{features_layer}:#{features_json} \
       --use-attribute-for-id=id \
       --convert-stringified-ids-to-numbers \
       --attribution='#{attribution}' \
       -o #{mbtiles}
-  ")
+  "
+  )
 
   # TODO: limiter par zoom dans le tuiles : ne marche pas
   # -j '{ "*": [  ">=", "$zoom", ["get", "zoom"] ] }'
