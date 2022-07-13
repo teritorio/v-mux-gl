@@ -8,6 +8,7 @@ services:
       - CONFIG=/data/config.yaml
     volumes:
       - ./data:/data
+#    restart: unless-stopped
 
   nginx:
     image: nginx
@@ -19,7 +20,7 @@ services:
       - ${NGINX_PORT:-8080}:80
     depends_on:
       - merge_proxy
-#    restart: always
+#    restart: unless-stopped
 
 volumes:
     cache:
