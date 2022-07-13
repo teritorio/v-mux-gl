@@ -61,23 +61,26 @@ end
 
 def class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, properties)
   if subclass
-    class_ontology_select(
-      ontology['superclass'][superclass]['class'][class_]['subclass'][subclass],
+    o = ontology.dig('superclass', superclass, 'class', class_, 'subclass', subclass)
+    (o && class_ontology_select(
+      o,
       ontology_overwrite.dig('superclass', superclass, 'class', class_, 'subclass', subclass),
       properties
-    )
+    )) || nil
   elsif class_
-    class_ontology_select(
-      ontology['superclass'][superclass]['class'][class_],
+    o = ontology.dig('superclass', superclass, 'class', class_)
+    (o && class_ontology_select(
+      o,
       ontology_overwrite.dig('superclass', superclass, 'class', class_),
       properties
-    )
+    )) || nil
   else
-    class_ontology_select(
-      ontology['superclass'][superclass],
+    o = ontology.dig('superclass', superclass)
+    (o && class_ontology_select(
+      o,
       ontology_overwrite.dig('superclass', superclass),
       properties
-    )
+    )) || nil
   end
 end
 
@@ -102,11 +105,10 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
     p = feature['properties']
     id = p['metadata']['id']
     superclass, class_, subclass = p['display']['style_class']
-    begin
-      onto = class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, p)
-      raise if !onto && feature['geometry']['type'] == 'Point'
-    rescue StandardError
+    onto = class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, p)
+    if !onto && feature['geometry']['type'] == 'Point'
       missing_classes << "#{superclass}/#{class_}/#{subclass}"
+      next
     end
     p = p.merge({
       id: id,
@@ -261,20 +263,20 @@ def build(_source_id, source)
   data_api_url = fetcher['data_api_url']
 
   polygon = source['polygon']
-  setting(data_api_url, polygon)
+  setting("#{data_api_url}/settings.json", polygon)
 
   mbtiles = source['sources']['partial']['mbtiles']
 
   features_data = []
   pois_layers = source['merge_layers'].compact.collect{ |source_layer_id, source_layer|
     classes = source_layer['classes']
-    m = menu("#{data_api_url}/menu", classes)
+    m = menu("#{data_api_url}/menu.json", classes)
 
     ontology = JSON.parse(http_get(source['sources']['full']['ontology']['url']))
     ontology_overwrite = source['sources']['full']['ontology']['overwrite'] || {}
 
     puts('- fetch from API')
-    pois = JSON.parse(http_get("#{data_api_url}/pois?short_description=true"))
+    pois = JSON.parse(http_get("#{data_api_url}/pois.geojson?short_description=true"))
     pois_features = pois['features']
 
     puts('- Convert POIs')
