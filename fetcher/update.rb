@@ -7,7 +7,6 @@ Bundler.setup
 require 'yaml'
 require 'json'
 require 'set'
-require 'deep_merge'
 require 'http'
 require 'webcache'
 require 'nokogiri'
@@ -45,7 +44,38 @@ def category_ids(ids)
   ids && (';' + ids.join(';') + ';')
 end
 
-def pois(pois_geojson, ontology)
+def class_ontology_condition(condition, _p)
+  # _p is used in eval context
+  !condition || eval(condition)
+end
+
+def class_ontology_select(o, oo, properties)
+  oo && class_ontology_condition(oo['condition'], properties) ? o.merge(oo) : o
+end
+
+def class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, properties)
+  if subclass
+    class_ontology_select(
+      ontology['superclass'][superclass]['class'][class_]['subclass'][subclass],
+      ontology_overwrite.dig('superclass', superclass, 'class', class_, 'subclass', subclass),
+      properties
+    )
+  elsif class_
+    class_ontology_select(
+      ontology['superclass'][superclass]['class'][class_],
+      ontology_overwrite.dig('superclass', superclass, 'class', class_),
+      properties
+    )
+  else
+    class_ontology_select(
+      ontology['superclass'][superclass],
+      ontology_overwrite.dig('superclass', superclass),
+      properties
+    )
+  end
+end
+
+def pois(pois_geojson, ontology, ontology_overwrite)
   missing_classes = Set.new
   pois_geojson = pois_geojson.select{ |feature|
     display = feature['properties']['display']
@@ -60,11 +90,7 @@ def pois(pois_geojson, ontology)
     id = p['metadata']['id']
     superclass, class_, subclass = p['display']['style_class']
     begin
-      onto = if subclass
-               ontology['superclass'][superclass]['class'][class_]['subclass'][subclass]
-             else
-               class_ ? ontology['superclass'][superclass]['class'][class_] : ontology['superclass'][superclass]
-             end
+      onto = class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, p)
       raise if !onto
     rescue StandardError
       missing_classes << "#{superclass}/#{class_}/#{subclass}"
@@ -232,15 +258,14 @@ def build(_source_id, source)
     menu("#{data_api_url}/menu", classes)
 
     ontology = JSON.parse(http_get(source['sources']['full']['ontology']['url']))
-    ontology_overwrite = source['sources']['full']['ontology']['data'] || {}
-    ontology.deep_merge!(ontology_overwrite)
+    ontology_overwrite = source['sources']['full']['ontology']['overwrite'] || {}
 
     puts('- fetch from API')
     pois = JSON.parse(http_get("#{data_api_url}/pois?short_description=true"))
     pois_features = pois['features']
 
     puts('- Convert POIs')
-    pois_data, poi_features_data = pois(pois_features, ontology)
+    pois_data, poi_features_data = pois(pois_features, ontology, ontology_overwrite)
     features_data += poi_features_data
     puts('- Convert Routes')
     features_data += routes(pois_features)

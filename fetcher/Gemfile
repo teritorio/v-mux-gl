@@ -1,7 +1,6 @@
 source 'https://rubygems.org'
 
 gem 'yaml'
-gem 'deep_merge'
 gem 'http'
 gem 'webcache'
 gem 'nokogiri'
