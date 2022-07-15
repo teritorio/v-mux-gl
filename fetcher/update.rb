@@ -83,7 +83,7 @@ def pois(pois_geojson, ontology, ontology_overwrite)
     (
       display &&
       feature['geometry'] && feature['geometry']['type'] &&
-      (feature['geometry']['type'] != 'Point' || (display['style_class'] && display['style_class'] != ''))
+      (feature['geometry']['type'] != 'Point' || display['style_class'])
     )
   }.collect{ |feature|
     p = feature['properties']
