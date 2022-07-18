@@ -38,6 +38,7 @@ def menu(url, json)
     m['style_class']
   }.sort.uniq
   File.write(json, JSON.pretty_generate(classes))
+  menu
 end
 
 def category_ids(ids)
@@ -75,7 +76,9 @@ def class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, p
   end
 end
 
-def pois(pois_geojson, ontology, ontology_overwrite)
+def pois(menu, pois_geojson, ontology, ontology_overwrite)
+  style_merge_id = Set.new(menu.select{ |m| m.dig('category', 'style_merge') }.map{ |m| m['category']['id'] })
+
   missing_classes = Set.new
   pois_geojson = pois_geojson.select{ |feature|
     display = feature['properties']['display']
@@ -83,7 +86,12 @@ def pois(pois_geojson, ontology, ontology_overwrite)
     (
       display &&
       feature['geometry'] && feature['geometry']['type'] &&
-      (feature['geometry']['type'] != 'Point' || display['style_class'])
+      (feature['geometry']['type'] != 'Point' ||
+        (
+          display['style_class'] &&
+          !(Set.new(feature.dig('properties', 'metadata', 'category_ids') || []) & style_merge_id).empty?
+        )
+      )
     )
   }.collect{ |feature|
     p = feature['properties']
@@ -91,7 +99,7 @@ def pois(pois_geojson, ontology, ontology_overwrite)
     superclass, class_, subclass = p['display']['style_class']
     begin
       onto = class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, p)
-      raise if !onto
+      raise if !onto && feature['geometry']['type'] == 'Point'
     rescue StandardError
       missing_classes << "#{superclass}/#{class_}/#{subclass}"
     end
@@ -255,7 +263,7 @@ def build(_source_id, source)
   features_data = []
   pois_layers = source['merge_layers'].compact.collect{ |source_layer_id, source_layer|
     classes = source_layer['classes']
-    menu("#{data_api_url}/menu", classes)
+    m = menu("#{data_api_url}/menu", classes)
 
     ontology = JSON.parse(http_get(source['sources']['full']['ontology']['url']))
     ontology_overwrite = source['sources']['full']['ontology']['overwrite'] || {}
@@ -265,7 +273,7 @@ def build(_source_id, source)
     pois_features = pois['features']
 
     puts('- Convert POIs')
-    pois_data, poi_features_data = pois(pois_features, ontology, ontology_overwrite)
+    pois_data, poi_features_data = pois(m, pois_features, ontology, ontology_overwrite)
     features_data += poi_features_data
     puts('- Convert Routes')
     features_data += routes(pois_features)
