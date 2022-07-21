@@ -17,7 +17,12 @@ config = ENV.fetch('CONFIG', nil)
 
 
 def http_get(url)
-  HTTP.headers(@config['fetch_http_headers'] || {}).follow.get(url).body
+  resp = HTTP.headers(@config['fetch_http_headers'] || {}).follow.get(url)
+  if resp.status.success?
+    resp.body
+  else
+    raise resp
+  end
 end
 
 @download_cache = WebCache.new(life: '6h', dir: '/data/cache')
