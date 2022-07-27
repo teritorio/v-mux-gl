@@ -4,14 +4,29 @@ require 'yaml'
 require 'json'
 require 'open-uri'
 require 'net/http'
-require 'webcache'
+require 'http'
 
 
-@download_cache = WebCache.new(life: '6h', dir: '/data/cache')
+config = ENV['CONFIG']
+server_url = ENV['SERVER']
+cache_bypass_header = ENV['BYPASS']
 
+
+@config = YAML.safe_load(File.read(config), aliases: true)
+ids = ARGV
+
+
+def http_get(url)
+  resp = HTTP.headers(@config['fetch_http_headers'] || {}).follow.get(url)
+  if resp.status.success?
+    resp.body
+  else
+    raise resp
+  end
+end
 
 def setting(url)
-  JSON.parse(@download_cache.get(url).content)
+  JSON.parse(http_get(url))
 end
 
 def deg2num(lon_deg, lat_deg, zoom)
@@ -49,20 +64,14 @@ def get_tiles(server_uri, request_uri, cache_bypass_header, bbox)
   }
 end
 
-config = ENV['CONFIG']
-server_url = ENV['SERVER']
-cache_bypass_header = ENV['BYPASS']
-
-ids = ARGV
 
 server_uri = URI(server_url)
-config = YAML.safe_load(File.read(config), aliases: true)
-config['sources'].select{ |id, _source| ids.empty? || ids.include?(id) }.each{ |id, source|
+@config['sources'].select{ |id, _source| ids.empty? || ids.include?(id) }.each{ |id, source|
   begin
     puts(id)
 
     data_api_url = source['sources']['partial']['fetcher']['data_api_url']
-    config = setting(data_api_url)
+    config = setting("#{data_api_url}/settings.json")
     bbox = config['bbox_line']['coordinates']
     puts bbox.inspect
 
