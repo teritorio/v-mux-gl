@@ -121,7 +121,7 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
       style: onto && onto['style'],
       color_fill: p['display'] && p['display']['color_fill'],
       color_line: p['display'] && p['display']['color_line'],
-      popup_properties: p['editorial'] && p['editorial']['popup_properties'],
+      popup_fields: p['editorial'] && p['editorial']['popup_fields'] && p['editorial']['popup_fields'].to_json,
     })
     p['name:latin'] = p['name'] if p.key?('name')
     p.delete('metadata')
@@ -224,7 +224,7 @@ def routes(routes_geojson)
       category_ids: category_ids(p['metadata']['category_ids']),
       color_fill: p['display'] && p['display']['color_fill'],
       color_line: p['display'] && p['display']['color_line'],
-      popup_properties: p['editorial'] && p['editorial']['popup_properties'],
+      popup_fields: p['editorial'] && p['editorial']['popup_fields'] && p['editorial']['popup_fields'].to_json,
     })
     p['name:latin'] = p['name'] if p.key?('name')
 
