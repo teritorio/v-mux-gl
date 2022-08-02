@@ -104,7 +104,7 @@ docker-compose restart
 
 Partial fetch
 ```
-docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm fetcher bash -c 'ruby ./update.rb foo'
+docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm fetcher bash -c 'ruby ./fetcher.rb foo'
 ```
 
 Update the tiles cache in nginx:

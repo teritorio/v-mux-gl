@@ -7,7 +7,7 @@ services:
       - CONFIG=/data/config.yaml
     volumes:
       - ./data:/data
-    command: bash -c 'ruby ./update.rb'
+    command: bash -c 'ruby ./fetcher.rb'
 
   expire:
     build: expire

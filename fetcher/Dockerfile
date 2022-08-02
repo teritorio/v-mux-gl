@@ -17,4 +17,4 @@ ADD Gemfile .
 RUN bundle config --global silence_root_warning 1
 RUN bundle install
 
-ADD update.rb .
+ADD fetcher.rb .
