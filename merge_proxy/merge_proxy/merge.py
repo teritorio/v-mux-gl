@@ -221,7 +221,7 @@ def merge_tile(
                     else:
                         partial_features[layer] = []
 
-            if len(list(filter(lambda f: f, partial_features))) == 0:
+            if not any(filter(lambda f: f, partial_features)):
                 if full_tile is None:
                     return None
                 elif len(full_features) == 0:
