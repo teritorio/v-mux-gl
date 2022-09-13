@@ -121,3 +121,12 @@ docker-compose --env-file .tools.env run --rm expire sh -c 'ruby ./get_tiles.rb 
 
 Under reverse proxy HTTP header `Host` should contains the original value.
 Header `Forwarded` should also properly set. See https://www.nginx.com/resources/wiki/start/topics/examples/forwarded/
+
+
+# Dev
+
+## Test
+
+```
+docker-compose --env-file .dev.env run --rm merge_proxy bash
+```
