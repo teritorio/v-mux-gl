@@ -1,0 +1,16 @@
+version: "3.3"
+
+services:
+  fetcher:
+    volumes:
+      - ./fetcher/fetcher.rb:/fetcher.rb
+
+  expire:
+    volumes:
+      - ./expire/get_tiles.rb:/get_tiles.rb
+
+  merge_proxy:
+    volumes:
+      - ./merge_proxy:/app
+    ports:
+      - 8000:8000
