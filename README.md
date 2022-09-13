@@ -24,7 +24,6 @@ docker-compose --env-file .tools.env build
 sources:
     foo:
         key: fi787or6ej8famrejfffp
-        polygon: dax.geojson
 
         sources:
             full:
@@ -50,7 +49,7 @@ sources:
                 layers_patch:
                     # Patch from local diff file
                 -   diff:
-                        patch: /data/features.layers-patch.json
+                        patch: features.layers-patch.json
                     amend:
                         add:
                         -   id: features-fill
@@ -74,6 +73,7 @@ fetch_http_headers:
     Secret: foo
 
 server:
+    config_path: ./config/
     public_base_path:
     public_tile_url_prefixes: []
 ```

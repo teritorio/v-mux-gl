@@ -15,6 +15,7 @@ require 'nokogiri'
 config = ENV.fetch('CONFIG', nil)
 @config = YAML.load(File.read(config)) # After update add "aliases: true"
 
+@config_path = @config['server']['config_path'] || ''
 
 def http_get(url)
   resp = HTTP.headers(@config['fetch_http_headers'] || {}).follow.get(url)
@@ -258,19 +259,19 @@ def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attribution)
   # -j '{ "*": [  ">=", "$zoom", ["get", "zoom"] ] }'
 end
 
-def build(_source_id, source)
+def build(_source_id, source, config_path)
   fetcher = source['sources']['partial']['fetcher']
   data_api_url = fetcher['data_api_url']
 
-  polygon = source['polygon']
+  polygon = "#{config_path}#{_source_id}.geojson"
   setting("#{data_api_url}/settings.json", polygon)
 
-  mbtiles = source['sources']['partial']['mbtiles']
+  mbtiles = config_path + source['sources']['partial']['mbtiles']
 
   features_data = []
   pois_layers = source['merge_layers'].compact.collect{ |source_layer_id, source_layer|
-    classes = source_layer['classes']
-    m = menu("#{data_api_url}/menu.json", classes)
+    filter = "#{config_path}#{_source_id}-classes.json"
+    m = menu("#{data_api_url}/menu.json", filter)
 
     ontology = JSON.parse(http_get(source['sources']['full']['ontology']['url']))
     ontology_overwrite = source['sources']['full']['ontology']['overwrite'] || {}
@@ -310,7 +311,7 @@ ids = ARGV
 @config['sources'].select{ |id, _source| ids.empty? || ids.include?(id) }.each{ |source_id, source|
   begin
     puts(source_id)
-    build(source_id, source)
+    build(source_id, source, @config_path)
   rescue StandardError => e
     puts "Error during processing: #{$!}"
     puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"

@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pathlib
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -26,6 +27,7 @@ config = yaml.load(
 if not config.get("server"):
     config["server"] = {}
 
+config_path = config["server"].get("config_path") or ""
 public_base_path = config["server"].get("public_base_path") or ""
 public_tile_url_prefixes = config["server"].get("public_tile_url_prefixes", [])
 
@@ -107,12 +109,14 @@ for (key, source_id_confs) in config_by_key.items():
     for (source_id, source_conf) in source_id_confs.items():
         try:
             tile_in_poly = None
-            if "polygon" in source_conf:
-                tile_in_poly = TileInPoly(open(source_conf["polygon"]))
+            polygon_path = config_path + source_id + ".geojson"
+            if pathlib.Path(polygon_path).is_file():
+                tile_in_poly = TileInPoly(open(polygon_path))
 
             merge_config[key][source_id] = MergeConfig(
                 sources=[
-                    sourceFactory(source) for source in source_conf["sources"].values()
+                    sourceFactory(source, config_path)
+                    for source in source_conf["sources"].values()
                 ],
                 min_zoom=int(source_conf["output"]["min_zoom"]),
                 tile_in_poly=tile_in_poly,
@@ -120,8 +124,12 @@ for (key, source_id_confs) in config_by_key.items():
                     layer: LayerConfig(
                         fields=merge_layer and merge_layer.get("fields"),
                         classes=merge_layer
-                        and merge_layer.get("classes")
-                        and json.loads(open(merge_layer["classes"], "r").read()),
+                        and json.loads(
+                            open(
+                                config_path + source_id + "-classes.json",
+                                "r",
+                            ).read()
+                        ),
                     )
                     for layer, merge_layer in source_conf["merge_layers"].items()
                 },
@@ -260,7 +268,9 @@ async def style(style_id: str, key: str, request: Request):
                 style_to = StyleGL(url=layer_patch["diff"]["to"])
                 patch = style_from.layers_diff(style_to)
             elif "patch" in layer_patch["diff"]:
-                patch_json = json.loads(open(layer_patch["diff"]["patch"]).read())
+                patch_json = json.loads(
+                    open(config_path + layer_patch["diff"]["patch"]).read()
+                )
                 patch = StyleGLLayersPatch(**patch_json)
 
             if patch:
