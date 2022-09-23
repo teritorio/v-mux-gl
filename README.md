@@ -69,6 +69,9 @@ sources:
                         paint:
                             line-color: #ff0000
 
+        cache:
+            prefetch: false # Optional cache prefetch disable, default: true
+
 fetch_http_headers:
     Secret: foo
 

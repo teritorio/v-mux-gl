@@ -66,7 +66,13 @@ end
 
 
 server_uri = URI(server_url)
-@config['sources'].select{ |id, _source| ids.empty? || ids.include?(id) }.each{ |id, source|
+@config['sources'].select{ |id, _source|
+  ids.empty? || ids.include?(id)
+}.select{ |id, source|
+  skip = source.dig('cache', 'prefetch') != false
+  puts("Skip #{id}")
+  skip
+}.each{ |id, source|
   begin
     puts(id)
 
