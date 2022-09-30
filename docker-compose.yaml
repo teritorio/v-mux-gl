@@ -8,6 +8,11 @@ services:
       - CONFIG=/data/config.yaml
     volumes:
       - ./data:/data
+    healthcheck:
+      test: curl --fail http://localhost:8000 || exit 1
+      interval: 2s
+      retries: 30
+      timeout: 120s
 #    restart: unless-stopped
 
   nginx:
@@ -19,7 +24,8 @@ services:
     ports:
       - ${NGINX_PORT:-8080}:80
     depends_on:
-      - merge_proxy
+      merge_proxy:
+        condition: service_healthy
 #    restart: unless-stopped
 
 volumes:

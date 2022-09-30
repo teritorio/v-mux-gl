@@ -18,3 +18,8 @@ services:
     volumes:
       - ./data:/data
     command: sh -c 'ruby ./get_tiles.rb'
+    depends_on:
+      merge_proxy:
+        condition: service_healthy
+      nginx:
+        condition: service_started
