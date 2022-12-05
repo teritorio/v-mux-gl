@@ -7,9 +7,9 @@ require 'net/http'
 require 'http'
 
 
-config = ENV['CONFIG']
-server_url = ENV['SERVER']
-cache_bypass_header = ENV['BYPASS']
+config = ENV.fetch('CONFIG', nil)
+server_url = ENV.fetch('SERVER', nil)
+cache_bypass_header = ENV.fetch('BYPASS', nil)
 
 
 @config = YAML.safe_load(File.read(config), aliases: true)

@@ -112,11 +112,11 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
       next
     end
     p = p.merge({
-      id: id,
+      id:,
       category_ids: category_ids(p['metadata']['category_ids']),
-      superclass: superclass,
+      superclass:,
       class: class_,
-      subclass: subclass,
+      subclass:,
       priority: onto && onto['priority'],
       zoom: onto && onto['zoom'],
       style: onto && onto['style'],
@@ -269,7 +269,7 @@ def build(_source_id, source, config_path)
   mbtiles = config_path + source['sources']['partial']['mbtiles']
 
   features_data = []
-  pois_layers = source['merge_layers'].compact.collect{ |source_layer_id, source_layer|
+  pois_layers = source['merge_layers'].compact.collect{ |source_layer_id, _source_layer|
     filter = "#{config_path}#{_source_id}-classes.json"
     m = menu("#{data_api_url}/menu.json", filter)
 

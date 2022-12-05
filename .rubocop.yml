@@ -1,5 +1,9 @@
 AllCops:
   NewCops: enable
+  TargetRubyVersion: 3.1
+  Exclude:
+    - bin
+    - '**/Rakefile.rb'
 
 Layout/EmptyLines:
   Enabled: false
@@ -32,4 +36,55 @@ Layout/FirstHashElementIndentation:
   Enabled: false
 
 Style/NumericPredicate:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/TrailingCommaInArguments:
+  Enabled: false
+
+Layout/FirstArgumentIndentation:
+  Enabled: false
+
+Lint/AmbiguousOperatorPrecedence:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Max: 30
+
+Metrics/MethodLength:
+  Max: 60
+
+Metrics/AbcSize:
+  Max: 50
+
+Metrics/PerceivedComplexity:
+  Max: 30
+
+Metrics/ModuleLength:
+  Max: 300
+
+Metrics/ClassLength:
+  Max: 1000
+
+Metrics/ParameterLists:
+  Max: 10
+
+Style/Next:
+  Enabled: false
+
+Naming/BlockForwarding:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Layout/FirstArrayElementIndentation:
+  Enabled: false
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: false
+
+Style/ClassVars:
   Enabled: false
