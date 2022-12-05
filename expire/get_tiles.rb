@@ -1,5 +1,6 @@
 #!/usr/bin/ruby
 
+require 'English'
 require 'yaml'
 require 'json'
 require 'open-uri'
@@ -18,11 +19,9 @@ ids = ARGV
 
 def http_get(url)
   resp = HTTP.headers(@config['fetch_http_headers'] || {}).follow.get(url)
-  if resp.status.success?
-    resp.body
-  else
-    raise resp
-  end
+  raise resp if !resp.status.success?
+
+  resp.body
 end
 
 def setting(url)
@@ -89,7 +88,7 @@ server_uri = URI(server_url)
 
     get_tiles(server_uri, request_uri, cache_bypass_header, bbox)
   rescue StandardError => e
-    puts "Error during processing: #{$!}"
+    puts "Error during processing: #{$ERROR_INFO}"
     puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
   end
 }

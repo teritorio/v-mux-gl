@@ -4,6 +4,7 @@ require 'rubygems'
 require 'bundler'
 Bundler.setup
 
+require 'English'
 require 'yaml'
 require 'json'
 require 'set'
@@ -131,7 +132,7 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
 
     {
       type: 'Feature',
-      properties: p.transform_values{ |v| v && v.is_a?(Array) ? v.join(';') : v },
+      properties: p.transform_values{ |v| v&.is_a?(Array) ? v.join(';') : v },
       geometry: feature['geometry'],
     }
   }.compact
@@ -171,17 +172,17 @@ def merge_compact_multilinestring(tracks)
     ends.delete(p)
 
     # Merge consecutive linestring
-    tracks_0 = tracks[0]
-    tracks_1 = tracks[1]
+    tracks0 = tracks[0]
+    tracks1 = tracks[1]
     tracks[0] = tracks[0].reverse if tracks[0][-1] != p
     tracks[1] = tracks[1].reverse if tracks[1][0] != p
 
-    merge_track = tracks[0] + tracks[1][1..-1]
+    merge_track = tracks[0] + tracks[1][1..]
 
     # Update ends
     if ends.include?(merge_track[0]) || ends.include?(merge_track[-1])
-      ends[merge_track[0]] = ends[merge_track[0]] - [tracks_0] + [merge_track] if ends.include?(merge_track[0])
-      ends[merge_track[-1]] = ends[merge_track[-1]] - [tracks_1] + [merge_track] if ends.include?(merge_track[-1])
+      ends[merge_track[0]] = ends[merge_track[0]] - [tracks0] + [merge_track] if ends.include?(merge_track[0])
+      ends[merge_track[-1]] = ends[merge_track[-1]] - [tracks1] + [merge_track] if ends.include?(merge_track[-1])
     else
       merge_tracks << merge_track
     end
@@ -259,18 +260,18 @@ def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attribution)
   # -j '{ "*": [  ">=", "$zoom", ["get", "zoom"] ] }'
 end
 
-def build(_source_id, source, config_path)
+def build(source_id, source, config_path)
   fetcher = source['sources']['partial']['fetcher']
   data_api_url = fetcher['data_api_url']
 
-  polygon = "#{config_path}#{_source_id}.geojson"
+  polygon = "#{config_path}#{source_id}.geojson"
   setting("#{data_api_url}/settings.json", polygon)
 
   mbtiles = config_path + source['sources']['partial']['mbtiles']
 
   features_data = []
   pois_layers = source['merge_layers'].compact.collect{ |source_layer_id, _source_layer|
-    filter = "#{config_path}#{_source_id}-classes.json"
+    filter = "#{config_path}#{source_id}-classes.json"
     m = menu("#{data_api_url}/menu.json", filter)
 
     ontology = JSON.parse(http_get(source['sources']['full']['ontology']['url']))
@@ -313,7 +314,7 @@ ids = ARGV
     puts(source_id)
     build(source_id, source, @config_path)
   rescue StandardError => e
-    puts "Error during processing: #{$!}"
+    puts "Error during processing: #{$ERROR_INFO}"
     puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
   end
 }
