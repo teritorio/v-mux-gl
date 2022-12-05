@@ -33,6 +33,7 @@ end
 def setting(url, polygon)
   setting = JSON.parse(http_get(url))
   File.write(polygon, JSON.pretty_generate(setting['polygon']))
+  setting
 end
 
 def menu(url, json)
@@ -242,7 +243,8 @@ def routes(routes_geojson)
   }
 end
 
-def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attribution)
+def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attributions)
+  attributions = attributions.collect{ |attribution| attribution.gsub('&copy;', '©') }
   system(
     'tippecanoe --force ' +
       pois_layers.collect{ |pois_json, pois_layer|
@@ -251,7 +253,7 @@ def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attribution)
       --named-layer=#{features_layer}:#{features_json} \
       --use-attribute-for-id=id \
       --convert-stringified-ids-to-numbers \
-      --attribution='#{attribution}' \
+      --attribution='#{attributions.join(' ')}' \
       -o #{mbtiles}
   "
   )
@@ -265,7 +267,8 @@ def build(source_id, source, config_path)
   data_api_url = fetcher['data_api_url']
 
   polygon = "#{config_path}#{source_id}.geojson"
-  setting("#{data_api_url}/settings.json", polygon)
+  settings = setting("#{data_api_url}/settings.json", polygon)
+  attributions = settings['attributions'] || []
 
   mbtiles = config_path + source['sources']['partial']['mbtiles']
 
@@ -302,8 +305,7 @@ def build(source_id, source, config_path)
     features: features_data
   }))
 
-  attribution = fetcher['attribution']
-  tippecanoe(pois_layers, features_json, 'features', mbtiles, attribution)
+  tippecanoe(pois_layers, features_json, 'features', mbtiles, attributions)
 end
 
 
