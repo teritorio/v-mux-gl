@@ -49,7 +49,7 @@ class StyleGLLayersPatch:
 
 
 class StyleGL:
-    def __init__(self, url: str, overwrite: Dict[str, Any] = None):
+    def __init__(self, url: str, overwrite: Optional[Dict[str, Any]] = None):
         r = requests.get(url)
         r.raise_for_status()
         self._gljson = r.json()

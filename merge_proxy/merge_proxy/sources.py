@@ -1,5 +1,5 @@
 import gzip
-from typing import Dict
+from typing import Dict, Optional
 
 import pymbtiles  # type: ignore
 import requests
@@ -42,7 +42,7 @@ class SourceXYZ(Source):
 
 
 class SourceTileJSON(SourceXYZ):
-    def __init__(self, tilejson_url: str, tile_url: str = None):
+    def __init__(self, tilejson_url: str, tile_url: Optional[str] = None):
         r = requests.get(tilejson_url)
         r.raise_for_status()
         self._tilejson = r.json()

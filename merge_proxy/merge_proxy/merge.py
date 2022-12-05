@@ -289,14 +289,15 @@ def merge_tilejson(
     for layer in layers:
         if "vector_layers" in full_tilejson and not any(
             filter(
-                lambda l: l["id"] == layer,  # type: ignore
+                lambda vector_layer: vector_layer["id"] == layer,  # type: ignore
                 full_tilejson["vector_layers"],  # type: ignore
             )
         ):
             if "vector_layers" in partial_tilejson:
                 partial_layer = next(
                     filter(
-                        lambda l: l["id"] == layer, partial_tilejson["vector_layers"]
+                        lambda vector_layer: vector_layer["id"] == layer,
+                        partial_tilejson["vector_layers"],
                     )
                 )
                 tilejson["vector_layers"].append(partial_layer)

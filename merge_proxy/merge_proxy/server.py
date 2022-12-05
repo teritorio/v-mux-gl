@@ -51,14 +51,14 @@ async def read_root():
 
 
 def public_url(request: Request, host_prefix=""):
-    d = {
+    d: Dict[str, Optional[str]] = {
         "proto": None,
         "host": None,
         "port": None,
     }
 
     try:
-        forwarded = request.headers.get("Forwarded")
+        forwarded = request.headers.get("Forwarded") or ""
         for f in forwarded.split(",")[0].split(";"):
             k, v = f.split("=")
             d[k] = v
