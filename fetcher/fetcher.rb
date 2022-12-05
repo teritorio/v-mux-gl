@@ -14,7 +14,7 @@ require 'nokogiri'
 
 
 config = ENV.fetch('CONFIG', nil)
-@config = YAML.load(File.read(config)) # After update add "aliases: true"
+@config = YAML.load(File.read(config), aliases: true)
 
 @config_path = @config['server']['config_path'] || ''
 
