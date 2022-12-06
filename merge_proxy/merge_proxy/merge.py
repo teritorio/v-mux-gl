@@ -273,7 +273,11 @@ def merge_tilejson(
     attributions = partial_attribution + "," + full_attribution
     attributions = attributions.replace("/a> <a", "/a>,<a").split(",")
     attributions = set(
-        [attribution.strip() for attribution in attributions if attribution.strip()]
+        [
+            attribution.strip().replace("&copy;", "©")
+            for attribution in attributions
+            if attribution.strip()
+        ]
     )
     attributions = " ".join(attributions)
 
