@@ -35,7 +35,6 @@ sources:
         merge_layers:
             poi_tourism:
                 fields: [superclass, class, subclass]
-                classes: classes.json
             features_tourism:
 
         output:
