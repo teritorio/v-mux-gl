@@ -250,6 +250,7 @@ def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attributions
       pois_layers.collect{ |pois_json, pois_layer|
         "--named-layer=#{pois_layer}:#{pois_json} "
       }.join(' ') + "\
+      -Z9 \
       --named-layer=#{features_layer}:#{features_json} \
       --use-attribute-for-id=id \
       --convert-stringified-ids-to-numbers \
