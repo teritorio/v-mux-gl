@@ -32,7 +32,7 @@ end
 
 def setting(url, polygon)
   setting = JSON.parse(http_get(url))
-  File.write(polygon, JSON.pretty_generate(setting['polygon']))
+  File.write(polygon, JSON.pretty_generate(setting['polygon']['data']))
   setting
 end
 
