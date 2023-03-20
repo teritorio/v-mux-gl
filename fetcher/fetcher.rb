@@ -11,6 +11,7 @@ require 'set'
 require 'http'
 require 'webcache'
 require 'nokogiri'
+require 'active_support/all'
 
 
 config = ENV.fetch('CONFIG', nil)
@@ -20,11 +21,9 @@ config = ENV.fetch('CONFIG', nil)
 
 def http_get(url)
   resp = HTTP.headers(@config['fetch_http_headers'] || {}).follow.get(url)
-  if resp.status.success?
-    resp.body
-  else
-    raise resp
-  end
+  raise resp unless resp.status.success?
+
+  resp.body
 end
 
 @download_cache = WebCache.new(life: '6h', dir: '/data/cache')
@@ -38,13 +37,9 @@ end
 
 def menu(url, json)
   menu = JSON.parse(http_get(url))
-  classes = menu.collect{ |m|
-    m['category']
-  }.compact.select{ |m|
+  classes = menu.pluck('category').compact.select{ |m|
     m['style_merge'] && m['style_class']
-  }.collect{ |m|
-    m['style_class']
-  }.sort.uniq
+  }.pluck('style_class').sort.uniq
   File.write(json, JSON.pretty_generate(classes))
   menu
 end
@@ -100,7 +95,7 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
       (feature['geometry']['type'] != 'Point' ||
         (
           display['style_class'] &&
-          !(Set.new(feature.dig('properties', 'metadata', 'category_ids') || []) & style_merge_id).empty?
+          !!Set.new(feature.dig('properties', 'metadata', 'category_ids') || []).intersect?(style_merge_id)
         )
       )
     )

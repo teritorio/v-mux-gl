@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
-gem 'yaml'
+gem 'activesupport'
 gem 'http'
-gem 'webcache'
 gem 'nokogiri'
+gem 'webcache'
+gem 'yaml'
