@@ -249,6 +249,9 @@ def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attributions
       --named-layer=#{features_layer}:#{features_json} \
       --use-attribute-for-id=id \
       --convert-stringified-ids-to-numbers \
+      --coalesce-smallest-as-needed \
+      --drop-smallest-as-needed \
+      --coalesce-fraction-as-needed \
       --attribution='#{attributions.join(' ')}' \
       -o #{mbtiles}
   "
