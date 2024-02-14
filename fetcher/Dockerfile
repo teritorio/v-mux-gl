@@ -1,9 +1,9 @@
 FROM alpine:3.18
 
-ARG TIPPECANOE_RELEASE="1.36.0"
+ARG TIPPECANOE_RELEASE="2.44.0"
 
 RUN apk add --no-cache bash git g++ make libgcc libstdc++ sqlite-libs sqlite-dev zlib-dev && \
-    git clone https://github.com/mapbox/tippecanoe.git tippecanoe && \
+    git clone https://github.com/felt/tippecanoe.git tippecanoe && \
     cd tippecanoe && \
     git checkout tags/$TIPPECANOE_RELEASE && \
     make && \
