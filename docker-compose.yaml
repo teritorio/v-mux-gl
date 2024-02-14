@@ -13,7 +13,7 @@ services:
       interval: 2s
       retries: 30
       timeout: 120s
-#    restart: unless-stopped
+    restart: unless-stopped
 
   nginx:
     image: nginx
@@ -26,7 +26,7 @@ services:
     depends_on:
       merge_proxy:
         condition: service_healthy
-#    restart: unless-stopped
+    restart: unless-stopped
 
 volumes:
     cache:
