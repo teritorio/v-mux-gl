@@ -253,7 +253,7 @@ def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attributions
       --drop-smallest-as-needed \
       --coalesce-fraction-as-needed \
       --maximum-tile-bytes=#{maximum_tile_bytes} \
-      --attribution='#{attributions.join(' ')}' \
+      --attribution='#{attributions.join(' ').gsub("\'", "\\\'")}' \
       -o #{mbtiles}
   "
   )
