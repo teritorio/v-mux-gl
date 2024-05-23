@@ -15,7 +15,7 @@ uvicorn --workers 4 merge_proxy.server:app
 A cache must me be provided on top to improve performance.
 
 
-Alternatively, just use the provided docker-compose configuration.
+Alternatively, just use the provided docker compose configuration.
 
 # Dev
 
