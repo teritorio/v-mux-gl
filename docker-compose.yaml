@@ -28,5 +28,33 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  fetcher:
+    profiles:
+      - tools
+    build: fetcher
+    environment:
+      - CONFIG=/data/config.yaml
+      - SENTRY_DSN_FETCHER=${SENTRY_DSN_FETCHER}
+    volumes:
+      - ./data:/data
+    command: bash -c 'ruby ./fetcher.rb'
+
+  expire:
+    profiles:
+      - tools
+    build: expire
+    environment:
+      - CONFIG=/data/config.yaml
+      - SERVER=http://nginx
+      - BYPASS=bypass
+    volumes:
+      - ./data:/data
+    command: sh -c 'ruby ./get_tiles.rb'
+    depends_on:
+      merge_proxy:
+        condition: service_healthy
+      nginx:
+        condition: service_started
+
 volumes:
     cache:

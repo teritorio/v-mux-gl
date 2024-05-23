@@ -13,7 +13,7 @@ Affect Style and Vector Tiles user by user using API Keys.
 
 ## Build
 ```
-docker compose --env-file .tools.env build
+docker compose --profile "*" build
 ```
 
 ## Configuration
@@ -83,7 +83,7 @@ server:
 ## Initialize data
 Setup configuration in `data` and fetch data:
 ```
-docker compose --env-file .tools.env run --rm fetcher
+docker compose --profile tools run --rm fetcher
 ```
 
 ## Run
@@ -93,30 +93,30 @@ docker compose up -d
 
 Fill the tiles cache in nginx:
 ```
-docker compose --env-file .tools.env run --rm expire
+docker compose --profile tools run --rm expire
 ```
 
 ## Data update
 
 Get and switch to new data:
 ```
-docker compose --env-file .tools.env run --rm fetcher
+docker compose --profile tools run --rm fetcher
 docker compose restart
 ```
 
 Partial fetch
 ```
-docker compose --env-file .tools.env run --rm fetcher bash -c 'ruby ./fetcher.rb foo'
+docker compose --profile tools run --rm fetcher bash -c 'ruby ./fetcher.rb foo'
 ```
 
 Update the tiles cache in nginx:
 ```
-docker compose --env-file .tools.env run --rm expire
+docker compose --profile tools run --rm expire
 ```
 
 Partial expire
 ```
-docker compose --env-file .tools.env run --rm expire sh -c 'ruby ./get_tiles.rb foo'
+docker compose --profile tools run --rm expire sh -c 'ruby ./get_tiles.rb foo'
 ```
 
 ## Serve
