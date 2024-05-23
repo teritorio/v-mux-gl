@@ -129,6 +129,8 @@ Header `Forwarded` should also properly set. See https://www.nginx.com/resources
 
 ## Test
 
+Before run test enable `docker-compose-dev.yml` in `.env`.
+
 ```
-docker compose --env-file .dev.env run --rm merge_proxy bash
+docker compose run --rm merge_proxy bash
 ```
