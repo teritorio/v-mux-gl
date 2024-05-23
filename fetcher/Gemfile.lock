@@ -44,6 +44,9 @@ GEM
     public_suffix (5.0.5)
     racc (1.8.0)
     rake (13.2.1)
+    sentry-ruby (5.17.3)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     webcache (0.9.0)
@@ -57,6 +60,7 @@ DEPENDENCIES
   activesupport
   http
   nokogiri
+  sentry-ruby
   webcache
   yaml
 

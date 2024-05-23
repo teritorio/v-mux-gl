@@ -12,7 +12,17 @@ require 'http'
 require 'webcache'
 require 'nokogiri'
 require 'active_support/all'
+require 'sentry-ruby'
 
+if ENV['SENTRY_DSN_FETCHER']
+  Sentry.init do |config|
+    config.dsn = ENV['SENTRY_DSN_FETCHER']
+    config.sample_rate = 1.0
+    config.traces_sample_rate = 1.0
+    config.breadcrumbs_logger = [:http_logger]
+    config.include_local_variables = true
+  end
+end
 
 config = ENV.fetch('CONFIG', nil)
 @config = YAML.load(File.read(config), aliases: true)
@@ -317,6 +327,7 @@ ids = ARGV
     puts(source_id)
     build(source_id, source, @config_path)
   rescue StandardError => e
+    Sentry.capture_exception(e)
     puts "Error during processing: #{$ERROR_INFO}"
     puts "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
   end
