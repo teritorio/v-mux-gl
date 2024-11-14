@@ -93,7 +93,7 @@ def class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, p
 end
 
 def pois(menu, pois_geojson, ontology, ontology_overwrite)
-  style_merge_id = Set.new(menu.select{ |m| m.dig('category', 'style_merge') }.map{ |m| m['category']['id'] })
+  style_merge_id = Set.new(menu.select{ |m| m.dig('category', 'style_merge') }.map{ |m| m['id'] })
 
   missing_classes = Set.new
   pois_geojson = pois_geojson.select{ |feature|
