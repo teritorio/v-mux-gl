@@ -14,7 +14,7 @@ from starlette.responses import RedirectResponse
 from .merge import merge_tile, merge_tilejson
 from .prometheus import mount_on as prometheus_mount_on
 from .sources import Source, sourceFactory
-from .style import StyleGL, StyleGLLayersPatch
+from .style import StyleGL, StyleGLStylePatch
 from .tile_in_poly import TileInPoly
 
 app = FastAPI()
@@ -260,22 +260,22 @@ async def style(style_id: str, key: str, request: Request):
     if style_config.get("sprite"):
         style_gl.insert_sprite(style_config.get("sprite"))
 
-    for layer_patch in style_config.get("layers_patch") or []:
-        if "diff" in layer_patch:
-            patch: StyleGLLayersPatch
-            if "from" in layer_patch["diff"] and "to" in layer_patch["diff"]:
-                style_from = StyleGL(url=layer_patch["diff"]["from"])
-                style_to = StyleGL(url=layer_patch["diff"]["to"])
+    for style_patch in style_config.get("patch") or []:
+        if "diff" in style_patch:
+            patch: StyleGLStylePatch
+            if "from" in style_patch["diff"] and "to" in style_patch["diff"]:
+                style_from = StyleGL(url=style_patch["diff"]["from"])
+                style_to = StyleGL(url=style_patch["diff"]["to"])
                 patch = style_from.layers_diff(style_to)
-            elif "patch" in layer_patch["diff"]:
+            elif "patch" in style_patch["diff"]:
                 patch_json = json.loads(
-                    open(config_path + layer_patch["diff"]["patch"]).read()
+                    open(config_path + style_patch["diff"]["patch"]).read()
                 )
-                patch = StyleGLLayersPatch(**patch_json)
+                patch = StyleGLStylePatch(**patch_json)
 
             if patch:
-                if "amend" in layer_patch:
-                    patch = patch.amend(StyleGLLayersPatch(**layer_patch["amend"]))
+                if "amend" in style_patch:
+                    patch = patch.amend(StyleGLStylePatch(**style_patch["amend"]))
                 style_gl = style_gl.apply_patch(patch)
 
     for layer in style_config.get("layers") or []:

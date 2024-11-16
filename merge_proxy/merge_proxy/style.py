@@ -6,6 +6,10 @@ import requests
 from mergedeep import merge as mergedeep
 
 
+class Source(Dict):
+    pass
+
+
 class Layer(Dict):
     pass
 
@@ -16,6 +20,22 @@ def layer_index(layers: List[Layer], layer_id: str) -> Optional[int]:
         (None, None),
     )
     return index
+
+
+@dataclass
+class StyleGLSourcePatch:
+    delete: List[str] = field(default_factory=list)
+    edited: Dict[str, Source] = field(default_factory=dict)
+    add: Dict[str, Source] = field(default_factory=dict)
+
+    def __bool__(self):
+        return bool(self.delete or self.edited or self.add)
+
+    def amend(self, merge: "StyleGLSourcePatch") -> "StyleGLSourcePatch":
+        self.delete += merge.delete
+        self.edited.update(merge.edited)
+        self.add.update(merge.add)
+        return self
 
 
 @dataclass
@@ -40,11 +60,35 @@ class StyleGLLayersPatch:
         return layers
 
     def amend(self, merge: "StyleGLLayersPatch") -> "StyleGLLayersPatch":
-        print("amend", merge)
         self.delete += merge.delete
         self.edited = self.layers_amend(self.edited, merge.edited)
         self.add = self.layers_amend(self.add, merge.add)
-        print(self.add)
+        return self
+
+
+@dataclass
+class StyleGLStylePatch:
+    sources: StyleGLSourcePatch = field(default=None)
+    layers: StyleGLLayersPatch = field(default=None)
+
+    def __init__(self, sources=None, layers=None):
+        self.sources = StyleGLSourcePatch(**sources) if sources else None
+        self.layers = StyleGLLayersPatch(**layers) if layers else None
+
+    def __bool__(self):
+        return bool(self.sources or self.layers)
+
+    def amend(self, merge: "StyleGLStylePatch") -> "StyleGLStylePatch":
+        if not self.sources:
+            self.sources = merge.sources
+        else:
+            self.sources.amend(merge.sources)
+
+        if not self.layers:
+            self.layers = merge.layers
+        else:
+            self.layers.amend(merge.layers)
+
         return self
 
 
@@ -110,26 +154,37 @@ class StyleGL:
             )
         )
 
-        return StyleGLLayersPatch(
+        style_path =  StyleGLStylePatch()
+        style_path.layers = StyleGLLayersPatch(
             delete=deleted_layer_ids,
             edited=list(map(lambda layer_id: other_map[layer_id], editer_layer_ids)),
             add=added_layers,
         )
+        style_path
 
-    def apply_patch(self, patch: StyleGLLayersPatch):
-        all_layers_ids = patch.delete + list(
-            map(lambda layer: layer["id"], patch.add + patch.edited)
-        )
-        self._gljson["layers"] = list(
-            filter(lambda layer: layer["id"] not in all_layers_ids, self.layers())
-        )
-        edited_map = {layer["id"]: layer for layer in patch.edited}
-        self._gljson["layers"] = list(
-            map(lambda layer: edited_map.get(layer["id"], layer), self.layers())
-        )
+    def apply_patch(self, patch: StyleGLStylePatch):
+        # Source patch
+        if patch.sources:
+            for source_id in patch.sources.delete:
+                self._gljson["sources"].pop(source_id)
+            self._gljson["sources"].update(patch.sources.edited)
+            self._gljson["sources"].update(patch.sources.add)
 
-        for layer in patch.add:
-            insert_before_id = layer.pop("insert_before_id", None)
-            self.insert_layer(layer, before=insert_before_id)
+        # Layer patch
+        if patch.layers:
+            all_layers_ids = patch.layers.delete + list(
+                map(lambda layer: layer["id"], patch.layers.add + patch.layers.edited)
+            )
+            self._gljson["layers"] = list(
+                filter(lambda layer: layer["id"] not in all_layers_ids, self.layers())
+            )
+            edited_map = {layer["id"]: layer for layer in patch.layers.edited}
+            self._gljson["layers"] = list(
+                map(lambda layer: edited_map.get(layer["id"], layer), self.layers())
+            )
+
+            for layer in patch.layers.add:
+                insert_before_id = layer.pop("insert_before_id", None)
+                self.insert_layer(layer, before=insert_before_id)
 
         return self
