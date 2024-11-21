@@ -160,7 +160,7 @@ class StyleGL:
             edited=list(map(lambda layer_id: other_map[layer_id], editer_layer_ids)),
             add=added_layers,
         )
-        style_path
+        return style_path
 
     def apply_patch(self, patch: StyleGLStylePatch):
         # Source patch
