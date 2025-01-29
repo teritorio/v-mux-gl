@@ -1,12 +1,44 @@
-name: merge_proxy-test.yml
+on: [push, pull_request]
 
-on:
-  push:
-  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install proj
+        run: sudo apt-get install -y proj-bin libproj-dev
 
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+
+      - name: Get pip cache dir
+        id: pip-cache
+        run: echo "::set-output name=dir::$(pip cache dir)"
+
+      - name: pip cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('.gitub/workflows/lint.yml') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -r merge_proxy/requirements.txt -r merge_proxy/requirements-dev.txt
+
+      - uses: psf/black@20.8b1
+
+      - name: Run flake8
+        run: (cd merge_proxy && python -m flake8 merge_proxy/)
+
+      - name: Run mypy
+        run: (cd merge_proxy && python -m mypy merge_proxy/)
+
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -59,3 +91,19 @@ jobs:
     - name: Test with pytest
       run: |
         cd merge_proxy/ && python -m pytest --cov=package_name --cov-report term --cov-report xml --cov-config .coveragerc --junitxml=merge_proxy/testresults.xml
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: github.ref == 'refs/heads/master'
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Docker Build and Push
+        uses: cartoway/docker-compose-build-push-action@main
+        with:
+          registry_password: ${{ secrets.GITHUB_TOKEN }}

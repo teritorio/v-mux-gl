@@ -4,6 +4,7 @@ services:
   merge_proxy:
     build:
       context: merge_proxy
+    image: ghcr.io/teritorio/v-mux-gl-merge_proxy:master
     environment:
       - CONFIG=/data/config.yaml
     volumes:
@@ -32,6 +33,7 @@ services:
     profiles:
       - tools
     build: fetcher
+    image: ghcr.io/teritorio/v-mux-gl-fetcher:master
     environment:
       - CONFIG=/data/config.yaml
       - SENTRY_DSN_FETCHER=${SENTRY_DSN_FETCHER}
@@ -43,6 +45,7 @@ services:
     profiles:
       - tools
     build: expire
+    image: ghcr.io/teritorio/v-mux-gl-expire:master
     environment:
       - CONFIG=/data/config.yaml
       - SERVER=http://nginx
