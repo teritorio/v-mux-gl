@@ -69,24 +69,24 @@ end
 
 def class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, properties)
   if subclass
-    o = ontology.dig('superclass', superclass, 'class', class_, 'subclass', subclass)
+    o = ontology.dig('group', superclass, 'group', class_, 'group', subclass)
     (o && class_ontology_select(
       o,
-      ontology_overwrite.dig('superclass', superclass, 'class', class_, 'subclass', subclass),
+      ontology_overwrite.dig('group', superclass, 'group', class_, 'group', subclass),
       properties
     )) || nil
   elsif class_
-    o = ontology.dig('superclass', superclass, 'class', class_)
+    o = ontology.dig('group', superclass, 'group', class_)
     (o && class_ontology_select(
       o,
-      ontology_overwrite.dig('superclass', superclass, 'class', class_),
+      ontology_overwrite.dig('group', superclass, 'group', class_),
       properties
     )) || nil
   else
-    o = ontology.dig('superclass', superclass)
+    o = ontology.dig('group', superclass)
     (o && class_ontology_select(
       o,
-      ontology_overwrite.dig('superclass', superclass),
+      ontology_overwrite.dig('group', superclass),
       properties
     )) || nil
   end
