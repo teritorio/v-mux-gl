@@ -4,7 +4,7 @@ requests
 fastapi
 uvicorn
 pyyaml
-shapely < 2
+shapely
 pyproj
 mergedeep
 prometheus-client
