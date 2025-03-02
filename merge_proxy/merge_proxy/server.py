@@ -33,12 +33,12 @@ public_tile_url_prefixes = config["server"].get("public_tile_url_prefixes", [])
 
 
 config_by_key: Dict[str, Dict[str, Any]] = defaultdict(dict)
-for (config_id, config_source) in config["sources"].items():
+for config_id, config_source in config["sources"].items():
     config_by_key[config_source["key"]][config_id] = config_source
 
 style_by_key: Dict[str, Dict[str, Any]] = defaultdict(dict)
-for (config_id, config_source) in config["sources"].items():
-    for (style_id, style_config) in (config_source.get("styles") or {}).items():
+for config_id, config_source in config["sources"].items():
+    for style_id, style_config in (config_source.get("styles") or {}).items():
         style_by_key[config_source["key"]][style_id] = {
             "config_id": config_id,
             "style_config": style_config,
@@ -105,8 +105,8 @@ class MergeConfig(object):
 
 
 merge_config: Dict[str, Dict[str, Any]] = defaultdict(dict)
-for (key, source_id_confs) in config_by_key.items():
-    for (source_id, source_conf) in source_id_confs.items():
+for key, source_id_confs in config_by_key.items():
+    for source_id, source_conf in source_id_confs.items():
         try:
             tile_in_poly = None
             polygon_path = config_path + source_id + ".geojson"
@@ -241,20 +241,22 @@ async def style(style_id: str, key: str, request: Request):
 
     style_gl = StyleGL(
         url=style_config["url"],
-        overwrite={
-            "sources": {
-                style_config["merged_source"]: {
-                    "type": "vector",
-                    "url": public_url(request)
-                    + public_base_path
-                    + app.url_path_for("tilejson", data_id=id)
-                    + "?"
-                    + str(request.query_params),
+        overwrite=(
+            {
+                "sources": {
+                    style_config["merged_source"]: {
+                        "type": "vector",
+                        "url": public_url(request)
+                        + public_base_path
+                        + app.url_path_for("tilejson", data_id=id)
+                        + "?"
+                        + str(request.query_params),
+                    }
                 }
             }
-        }
-        if style_config.get("merged_source")
-        else {},
+            if style_config.get("merged_source")
+            else {}
+        ),
     )
 
     if style_config.get("sprite"):

@@ -1,6 +1,6 @@
 import difflib
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, Callable, Dict, List, Optional, Set, cast
 
 import requests
 from mergedeep import merge as mergedeep
@@ -173,7 +173,13 @@ class StyleGL:
         # Layer patch
         if patch.layers:
             self._gljson["layers"] = list(
-                filter(lambda layer: layer["id"] not in patch.layers.delete, self.layers())
+                filter(
+                    cast(
+                        Callable[[Layer], bool],
+                        lambda layer: layer["id"] not in patch.layers.delete,
+                    ),
+                    self.layers(),
+                )
             )
             edited_map = {layer["id"]: layer for layer in patch.layers.edited}
             self._gljson["layers"] = list(
