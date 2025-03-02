@@ -172,11 +172,8 @@ class StyleGL:
 
         # Layer patch
         if patch.layers:
-            all_layers_ids = patch.layers.delete + list(
-                map(lambda layer: layer["id"], patch.layers.add + patch.layers.edited)
-            )
             self._gljson["layers"] = list(
-                filter(lambda layer: layer["id"] not in all_layers_ids, self.layers())
+                filter(lambda layer: layer["id"] not in patch.layers.delete, self.layers())
             )
             edited_map = {layer["id"]: layer for layer in patch.layers.edited}
             self._gljson["layers"] = list(
