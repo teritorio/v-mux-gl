@@ -68,8 +68,8 @@ class StyleGLLayersPatch:
 
 @dataclass
 class StyleGLStylePatch:
-    sources: StyleGLSourcePatch = field(default=None)
-    layers: StyleGLLayersPatch = field(default=None)
+    sources: Optional[StyleGLSourcePatch] = field(default=None)
+    layers: Optional[StyleGLLayersPatch] = field(default=None)
 
     def __init__(self, sources=None, layers=None):
         self.sources = StyleGLSourcePatch(**sources) if sources else None
@@ -79,14 +79,14 @@ class StyleGLStylePatch:
         return bool(self.sources or self.layers)
 
     def amend(self, merge: "StyleGLStylePatch") -> "StyleGLStylePatch":
-        if not self.sources:
+        if self.sources is None:
             self.sources = merge.sources
-        else:
+        elif merge.sources is not None:
             self.sources.amend(merge.sources)
 
-        if not self.layers:
+        if self.layers is None:
             self.layers = merge.layers
-        else:
+        elif merge.layers is not None:
             self.layers.amend(merge.layers)
 
         return self
@@ -120,7 +120,7 @@ class StyleGL:
     def layer_ids(self) -> List[str]:
         return list(map(lambda layer: layer["id"], self.layers()))
 
-    def layers_diff(self, other) -> StyleGLLayersPatch:
+    def layers_diff(self, other) -> StyleGLStylePatch:
         diff_iter = difflib.unified_diff(
             self.layer_ids(), other.layer_ids(), lineterm="", n=0
         )
@@ -154,7 +154,7 @@ class StyleGL:
             )
         )
 
-        style_path =  StyleGLStylePatch()
+        style_path = StyleGLStylePatch()
         style_path.layers = StyleGLLayersPatch(
             delete=deleted_layer_ids,
             edited=list(map(lambda layer_id: other_map[layer_id], editer_layer_ids)),
