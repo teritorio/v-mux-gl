@@ -8,3 +8,11 @@ RUN pip install -r requirements.txt
 COPY . .
 CMD ./entrypoint.sh
 EXPOSE 8000
+
+HEALTHCHECK \
+    --start-interval=1s \
+    --start-period=30s \
+    --interval=30s \
+    --timeout=20s \
+    --retries=5 \
+    CMD curl --fail http://localhost:8000 || exit 1
