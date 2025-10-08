@@ -250,14 +250,14 @@ def routes(routes_geojson)
   }
 end
 
-def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attributions, maximum_tile_bytes)
+def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attributions, min_zoom, maximum_tile_bytes)
   attributions = attributions.collect{ |attribution| attribution.gsub('&copy;', '©') }
   system(
     'tippecanoe --force ' +
       pois_layers.collect{ |pois_json, pois_layer|
         "--named-layer=#{pois_layer}:#{pois_json} "
       }.join(' ') + "\
-      -Z9 \
+      -Z#{min_zoom} \
       --named-layer=#{features_layer}:#{features_json} \
       --use-attribute-for-id=id \
       --convert-stringified-ids-to-numbers \
@@ -318,7 +318,8 @@ def build(source_id, source, config_path)
   }))
 
   maximum_tile_bytes = source.dig('output', 'maximum_tile_bytes')&.to_i || 500_000
-  tippecanoe(pois_layers, features_json, 'features', mbtiles, attributions, maximum_tile_bytes)
+  min_zoom = source.dig('output', 'min_zoom')&.to_i || 9
+  tippecanoe(pois_layers, features_json, 'features', mbtiles, attributions, min_zoom, maximum_tile_bytes)
 end
 
 
