@@ -39,7 +39,7 @@ services:
       - SENTRY_DSN_FETCHER=${SENTRY_DSN_FETCHER:-}
     volumes:
       - ./data:/data
-    command: bash -c 'ruby ./fetcher.rb'
+    command: ruby ./fetcher.rb
 
   expire:
     profiles:
@@ -52,7 +52,7 @@ services:
       - BYPASS=bypass
     volumes:
       - ./data:/data
-    command: sh -c 'ruby ./get_tiles.rb'
+    command: ruby ./get_tiles.rb
     depends_on:
       merge_proxy:
         condition: service_healthy

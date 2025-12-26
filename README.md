@@ -107,7 +107,7 @@ docker compose restart
 
 Partial fetch
 ```
-docker compose --profile tools run --rm fetcher bash -c 'ruby ./fetcher.rb foo'
+docker compose --profile tools run --rm fetcher ruby ./fetcher.rb foo
 ```
 
 Update the tiles cache in nginx:
@@ -117,7 +117,7 @@ docker compose --profile tools run --rm expire
 
 Partial expire
 ```
-docker compose --profile tools run --rm expire sh -c 'ruby ./get_tiles.rb foo'
+docker compose --profile tools run --rm expire ruby ./get_tiles.rb foo
 ```
 
 ## Serve

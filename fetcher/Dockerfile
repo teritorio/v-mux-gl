@@ -1,6 +1,6 @@
-FROM alpine:3.18
+FROM alpine:3.23
 
-ARG TIPPECANOE_RELEASE="2.44.0"
+ARG TIPPECANOE_RELEASE="2.79.0"
 
 RUN apk add --no-cache bash git g++ make libgcc libstdc++ sqlite-libs sqlite-dev zlib-dev && \
     git clone https://github.com/felt/tippecanoe.git tippecanoe && \
@@ -10,7 +10,15 @@ RUN apk add --no-cache bash git g++ make libgcc libstdc++ sqlite-libs sqlite-dev
     make install && \
     cd / && \
     rm -rf /tippecanoe
-RUN apk add --no-cache --virtual build-dependencies build-base bash curl ruby ruby-dev ruby-bundler ruby-json libffi-dev
+
+RUN apk add --no-cache --virtual \
+        bash \
+        build-base \
+        curl \
+        libffi-dev \
+        ruby \
+        ruby-bundler \
+        ruby-dev
 
 ADD Gemfile .
 RUN bundle config --global silence_root_warning 1

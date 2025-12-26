@@ -9,8 +9,6 @@ require 'yaml'
 require 'json'
 require 'set'
 require 'http'
-require 'webcache'
-require 'nokogiri'
 require 'active_support/all'
 require 'sentry-ruby'
 
@@ -35,9 +33,6 @@ def http_get(url)
 
   resp.body
 end
-
-@download_cache = WebCache.new(life: '6h', dir: '/data/cache')
-
 
 def setting(url, polygon)
   setting = JSON.parse(http_get(url))
@@ -93,49 +88,67 @@ def class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, p
 end
 
 def pois(menu, pois_geojson, ontology, ontology_overwrite)
-  style_merge_id = Set.new(menu.select{ |m| m.dig('category', 'style_merge') }.map{ |m| m['id'] })
+  menu = menu.select{ |m| !m.dig('category', 'style_merge').nil? }
+  menu_by_id = menu.index_by{ |m| m['id'] }
+  category_merge_ids = Set.new(menu_by_id.keys)
+  puts "    Merge #{category_merge_ids.size} categories"
 
   missing_classes = Set.new
-  pois_geojson = pois_geojson.select{ |feature|
-    display = feature['properties']['display']
+  pois_geojson_size = pois_geojson.size
+  pois_geojson = pois_geojson.collect{ |feature|
+    geometry_type = feature.dig('geometry', 'type')
+    next if geometry_type.nil?
+    category_ids = feature.dig('properties', 'metadata', 'category_ids')
+    next if category_ids.nil?
+    next if !category_merge_ids.intersect?(category_ids)
+    [geometry_type, category_ids, feature]
+  }.compact
+  puts "    Filtered to #{pois_geojson.size} objects from #{pois_geojson_size}"
 
-    (
-      display &&
-      feature['geometry'] && feature['geometry']['type'] &&
-      (feature['geometry']['type'] != 'Point' ||
-        (
-          display['style_class'] &&
-          !!Set.new(feature.dig('properties', 'metadata', 'category_ids') || []).intersect?(style_merge_id)
-        )
-      )
-    )
-  }.collect{ |feature|
+  pois_geojson = pois_geojson.collect{ |geometry_type, category_ids, feature|
     p = feature['properties']
     id = p['metadata']['id']
-    superclass, class_, subclass = p['display']['style_class']
-    onto = class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, p)
-    if !onto && feature['geometry']['type'] == 'Point'
-      missing_classes << "#{superclass}/#{class_}/#{subclass}"
+    menu = menu_by_id[category_ids&.first]
+    if menu.nil?
+      puts "Missing menu for category_id=#{category_ids&.first} in POI id=#{id}"
       next
     end
-    p = p.merge({
-      id:,
-      category_ids: category_ids(p['metadata']['category_ids']),
-      superclass:,
-      class: class_,
-      subclass:,
-      priority: onto && onto['priority'],
-      zoom: onto && onto['zoom'],
-      style: onto && onto['style'],
-      color_fill: p['display'] && p['display']['color_fill'],
-      color_line: p['display'] && p['display']['color_line'],
-      color_text: p['display'] && p['display']['color_text'],
-      popup_fields: p['editorial'] && p['editorial']['popup_fields'] && p['editorial']['popup_fields'].to_json,
-    })
+    category = menu['category']
+
+    if geometry_type == 'Point'
+      next if category['style_class'].nil?
+      superclass, class_, subclass = category['style_class']
+      onto = class_ontology(superclass, class_, subclass, ontology, ontology_overwrite, p)
+      if !onto
+        missing_classes << [superclass, class_, subclass].compact.join('/')
+        next
+      end
+
+      p = p.merge({
+        id:,
+        category_ids: category_ids(category_merge_ids & category_ids),
+        superclass:,
+        class: class_,
+        subclass:,
+        priority: onto['priority'],
+        zoom: onto['zoom'],
+        style: onto['style'],
+      })
+    else
+      p = p.merge({
+        id:,
+        category_ids: category_ids(category_ids),
+        color_fill: p.dig('display', 'color_fill') || category['color_fill'],
+        color_line: p.dig('display', 'color_line') || category['color_line'],
+        color_text: p.dig('display', 'color_text') || category['color_text'],
+      })
+    end
+
     p['name:latin'] = p['name'] if p.key?('name')
     p.delete('metadata')
     p.delete('editorial')
     p.delete('display')
+    p = p.compact
 
     {
       type: 'Feature',
@@ -145,7 +158,7 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
   }.compact
 
   missing_classes.each{ |mc|
-    warn "Missing #{mc}"
+    warn "Style class not found in ontology: #{mc}"
   }
 
   groups = pois_geojson.group_by{ |feature|
@@ -153,101 +166,6 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
   }
 
   [groups[true] || [], groups[false] || []]
-end
-
-def merge_compact_multilinestring(tracks)
-  # Count tracks at connection points
-  ends = Hash.new { |h, k| h[k] = [] }
-  tracks.each{ |track|
-    ends[track[0]] << track
-    ends[track[-1]] << track
-  }
-
-  # Exclude non mergable tracks
-  merge_tracks = []
-  ends.each{ |p, tracks|
-    if tracks.size != 2
-      merge_tracks += tracks
-      ends.delete(p)
-    end
-  }
-  merge_tracks = merge_tracks.uniq - ends.collect{ |_p, tracks| tracks }.flatten(1)
-
-  while ends.size > 0
-    p = ends.keys[0]
-    tracks = ends[p]
-    ends.delete(p)
-
-    # Merge consecutive linestring
-    tracks0 = tracks[0]
-    tracks1 = tracks[1]
-    tracks[0] = tracks[0].reverse if tracks[0][-1] != p
-    tracks[1] = tracks[1].reverse if tracks[1][0] != p
-
-    merge_track = tracks[0] + tracks[1][1..]
-
-    # Update ends
-    if ends.include?(merge_track[0]) || ends.include?(merge_track[-1])
-      ends[merge_track[0]] = ends[merge_track[0]] - [tracks0] + [merge_track] if ends.include?(merge_track[0])
-      ends[merge_track[-1]] = ends[merge_track[-1]] - [tracks1] + [merge_track] if ends.include?(merge_track[-1])
-    else
-      merge_tracks << merge_track
-    end
-  end
-
-  merge_tracks
-end
-
-def gpx2geojson(gpx)
-  doc = Nokogiri::XML(gpx)
-  doc.remove_namespaces!
-  {
-    type: 'MultiLineString',
-    coordinates: doc.xpath('/gpx/rte').collect{ |rte|
-      rte.xpath('rtept').collect{ |pt|
-        [pt.attribute('lon').to_s.to_f, pt.attribute('lat').to_s.to_f]
-      }
-    } + doc.xpath('/gpx/trk').collect{ |trk|
-      trk.xpath('trkseg').collect{ |seg|
-        seg.xpath('trkpt').collect{ |pt|
-          [pt.attribute('lon').to_s.to_f, pt.attribute('lat').to_s.to_f]
-        }
-      }
-    }.flatten(1)
-  }
-end
-
-def routes(routes_geojson)
-  cache = WebCache.new(life: '30d', dir: '/data/routes-cache')
-
-  routes_geojson.select{ |feature|
-    !feature['properties']['route:gpx_trace'].nil?
-  }.each{ |feature|
-    feature['properties']['route:trace'] = cache.get(feature['properties']['route:gpx_trace']).content
-  }.select{ |feature|
-    !feature['properties']['route:trace'].nil?
-  }.collect{ |feature|
-    p = feature['properties']
-    p.merge!({
-      id: p['metadata']['id'],
-      category_ids: category_ids(p['metadata']['category_ids']),
-      color_fill: p['display'] && p['display']['color_fill'],
-      color_line: p['display'] && p['display']['color_line'],
-      color_text: p['display'] && p['display']['color_text'],
-      popup_fields: p['editorial'] && p['editorial']['popup_fields'] && p['editorial']['popup_fields'].to_json,
-    })
-    p['name:latin'] = p['name'] if p.key?('name')
-
-    feature['geometry'] = gpx2geojson(feature['properties']['route:trace'])
-    p.delete('route:trace')
-
-    p.delete('metadata')
-    p.delete('editorial')
-    p.delete('display')
-
-    feature['properties'] = p.transform_values{ |v| v && v.is_a?(Array) ? v.join(';') : v }
-    feature
-  }
 end
 
 def tippecanoe(pois_layers, features_json, features_layer, mbtiles, attributions, min_zoom, maximum_tile_bytes)
@@ -299,8 +217,6 @@ def build(source_id, source, config_path)
     puts('- Convert POIs')
     pois_data, poi_features_data = pois(m, pois_features, ontology, ontology_overwrite)
     features_data += poi_features_data
-    puts('- Convert Routes')
-    features_data += routes(pois_features)
 
     pois_json = mbtiles.gsub('.mbtiles', '-pois.geojson')
     File.write(pois_json, JSON.pretty_generate({
