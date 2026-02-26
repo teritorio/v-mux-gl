@@ -144,7 +144,18 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
       })
     end
 
-    p['name:latin'] = p['name'] if p.key?('name')
+    if p.key?('name')
+      just_a_name = nil
+      p['name'].each{ |lang, name|
+        lang = lang.split('-')[0]
+        just_a_name = name
+        p["name:#{lang}"] = name
+      }
+      p.delete('name')
+      p['name'] = p['name:fr'] || p['name:en'] || just_a_name
+      p['name:latin'] = p['name'] if p.key?('name')
+    end
+
     p.delete('metadata')
     p.delete('editorial')
     p.delete('display')
