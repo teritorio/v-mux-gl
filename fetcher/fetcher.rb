@@ -156,6 +156,8 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
       p['name:latin'] = p['name'] if p.key?('name')
     end
 
+    p.delete('description')
+
     p.delete('metadata')
     p.delete('editorial')
     p.delete('display')
