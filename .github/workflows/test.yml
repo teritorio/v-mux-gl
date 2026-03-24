@@ -90,7 +90,23 @@ jobs:
       id-token: write
 
     steps:
-      - name: Docker Build and Push
+      - name: Docker Build and Push Merge Proxy
         uses: cartoway/docker-compose-build-push-action@main
         with:
           registry_password: ${{ secrets.GITHUB_TOKEN }}
+          project: teritorio/v-mux-gl-merge_proxy
+          service: merge_proxy
+
+      - name: Docker Build and Push Fetcher
+        uses: cartoway/docker-compose-build-push-action@main
+        with:
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          project: teritorio/v-mux-gl-fetcher
+          service: fetcher
+
+      - name: Docker Build and Push Expire
+        uses: cartoway/docker-compose-build-push-action@main
+        with:
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          project: teritorio/v-mux-gl-expire
+          service: expire
