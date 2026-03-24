@@ -8,29 +8,27 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Install proj
-        run: sudo apt-get install -y proj-bin libproj-dev
+      - uses: actions/checkout@v4
 
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-python@v2
-
-      - name: Get pip cache dir
-        id: pip-cache
-        run: echo "::set-output name=dir::$(pip cache dir)"
-
-      - name: pip cache
-        uses: actions/cache@v4
+      - uses: actions/setup-python@v5
         with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('.gitub/workflows/lint.yml') }}
-          restore-keys: ${{ runner.os }}-pip-
+          python-version: 3.13
+          cache: pip
+          cache-dependency-path: |
+            merge_proxy/requirements.txt
+            merge_proxy/requirements-dev.txt
+
+      - name: Install proj
+        run: sudo apt-get update && sudo apt-get install -y proj-bin libproj-dev
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           python -m pip install -r merge_proxy/requirements.txt -r merge_proxy/requirements-dev.txt
 
-      - uses: psf/black@20.8b1
+      - uses: psf/black@stable
+        with:
+          version: "~= 24.0"
 
       - name: Run flake8
         run: (cd merge_proxy && python -m flake8 merge_proxy/)
@@ -43,54 +41,43 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.9"]
+        python-version: [3.13]
         # include:
         #   - os: macos-latest
-        #     python-version: "3.9"
+        #     python-version: 3.13
         #   - os: windows-latest
-        #     python-version: "3.9"
+        #     python-version: 3.13
     env:
       OS: ${{ matrix.os }}
       PYTHON: ${{ matrix.python-version }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: "pip"
+        cache-dependency-path: |
+          merge_proxy/requirements.txt
+          merge_proxy/requirements-test.txt
 
     - name: System information
       run: python .github/workflows/system_info.py
 
-    - name: Get pip cache dir
-      id: pip-cache
-      run: echo "::set-output name=dir::$(pip cache dir)"
-
-    - name: pip cache
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-pip-py${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: ${{ runner.os }}-pip-
+    - name: Install proj
+      run: sudo apt-get update && sudo apt-get install -y proj-bin libproj-dev
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8
         python -m pip install -r merge_proxy/requirements.txt -r merge_proxy/requirements-test.txt
 
-    - name: Sanity check with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        python -m flake8 merge_proxy/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings
-        python -m flake8 merge_proxy/ --count --exit-zero --statistics
-
     - name: Test with pytest
+      working-directory: merge_proxy
       run: |
-        cd merge_proxy/ && python -m pytest --cov=package_name --cov-report term --cov-report xml --cov-config .coveragerc --junitxml=merge_proxy/testresults.xml
+        python -m pytest --cov=package_name --cov-report term --cov-report xml --cov-config .coveragerc --junitxml=testresults.xml
 
   docker:
     runs-on: ubuntu-latest
