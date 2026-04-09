@@ -108,9 +108,10 @@ def pois(menu, pois_geojson, ontology, ontology_overwrite)
   pois_geojson = pois_geojson.collect{ |geometry_type, category_ids, feature|
     p = feature['properties']
     id = p['metadata']['id']
-    menu = menu_by_id[category_ids&.first]
+    category_id = category_ids.find{ |category_id| menu_by_id.key?(category_id) }
+    menu = menu_by_id[category_id]
     if menu.nil?
-      puts "Missing menu for category_id=#{category_ids&.first} in POI id=#{id}"
+      puts "Missing menu for category_id=#{category_ids&.join('|')} in POI id=#{id}"
       next
     end
     category = menu['category']
