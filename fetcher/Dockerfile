@@ -1,4 +1,4 @@
-FROM alpine:3.23
+FROM alpine:3.24
 
 ARG TIPPECANOE_RELEASE="2.79.0"
 
